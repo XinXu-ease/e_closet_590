@@ -1,0 +1,13 @@
+{
+  "fileKey": "7UmauOUmGRW7XMDdAkCosY",
+  "version": "prototype-0",
+  "screens": [
+    { "name": "Closet", "route": "/closet" },
+    { "name": "Add New Item", "route": "/items/new" },
+    { "name": "Item Detail", "route": "/items/[id]" },
+    { "name": "Create Outfit", "route": "/create" },
+    { "name": "Saved Outfits", "route": "/outfits" },
+    { "name": "Outfit Detail", "route": "/outfits/[id]" },
+    { "name": "Me / Settings", "route": "/settings" }
+  ]
+}
