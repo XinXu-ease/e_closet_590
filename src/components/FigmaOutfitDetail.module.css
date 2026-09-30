@@ -3,6 +3,9 @@
 .brand { color: #756e63; font-size: 11px; font-weight: 600; }
 .title { margin-top: 5px; color: #29241f; font-size: 32px; font-weight: 700; line-height: 1; }
 .subtitle { margin-top: 6px; color: #756e63; font-size: 13px; }
+.weather { position: absolute; top: 20px; right: 4px; display: flex; flex-direction: column; align-items: flex-end; color: #756e63; font-size: 10px; line-height: 1.35; text-align: right; white-space: nowrap; }
+.weatherPrimary { color: #29241f; font-size: 12px; font-weight: 600; }
+.weatherMuted { color: #756e63; }
 .canvas { position: absolute; top: 124px; right: 24px; left: 24px; height: 330px; overflow: hidden; background: #fffefb; border: 1px solid #c2b8ab; border-radius: 24px; touch-action: none; }
 .piece { width: 100%; height: 100%; object-fit: contain; user-select: none; pointer-events: none; }
 .selected { outline: 1.5px solid #29241f; outline-offset: 2px; }

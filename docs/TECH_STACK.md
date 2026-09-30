@@ -14,6 +14,7 @@
 | Outfit canvas | `react-rnd` | Bounded dragging and locked-aspect-ratio resizing |
 | Layer controls | React state + CSS `z-index` | Reorder, duplicate, select, and remove outfit pieces |
 | Image processing | remove.bg through `/api/remove-background` | Produce transparent WebP cutouts without exposing the API key |
+| Weather | Browser Geolocation + Open-Meteo through `/api/weather` | Show the current local temperature in Outfit Builder |
 | Delivery | Vercel | Build and deploy the Next.js application |
 
 The repository remains a Next.js application. It is **not** being migrated to Vite. In a Vite project, “the Vite client” means the JavaScript application that Vite bundles and the browser executes. This project has the same browser-side responsibilities—forms, IndexedDB, and canvas interaction—but Next.js provides the build, routes, and deployment integration instead of Vite.
@@ -31,6 +32,7 @@ Zustand, Konva, Tailwind, a server database, accounts, cloud sync, PWA tooling, 
 | `/outfits/new` | Outfit Detail / Builder in create mode |
 | `/outfits/[id]` | Outfit Detail / Builder in edit mode |
 | `/outfits` | Saved Outfits gallery |
+| `/api/weather` | Validate rounded coordinates and proxy current Open-Meteo weather |
 
 Dynamic App Router pages await the Next.js 16 `params` promise and pass the real record ID into their client component.
 
@@ -110,6 +112,7 @@ The API key is server-only and must be configured as `REMOVE_BG_API_KEY` in `.en
 ## 5. State Boundaries
 
 - React component state: search/filter values, form drafts, drawer state, selected canvas instance, and unsaved outfit pieces.
+- Browser Geolocation: request the current position; coordinates are rounded to two decimal places before the weather request.
 - IndexedDB: saved clothing, images, and outfits.
 - `useLiveQuery`: reactive database reads for Closet, the Builder tray, Item Detail, and Saved Outfits.
 - No global state library is required.

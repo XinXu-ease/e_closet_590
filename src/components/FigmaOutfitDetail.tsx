@@ -8,6 +8,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { Rnd } from "react-rnd";
 import { BottomNavigation } from "./BottomNavigation";
 import { ClothingCard } from "./ClothingCard";
+import { OutfitWeather } from "./OutfitWeather";
 import { useElementSize } from "@/hooks/useElementSize";
 import { useHorizontalDragScroll } from "@/hooks/useHorizontalDragScroll";
 import { useObjectUrl } from "@/hooks/useObjectUrl";
@@ -191,7 +192,7 @@ export default function FigmaOutfitDetail({ mode, outfitId }: FigmaOutfitDetailP
   };
 
   return <div data-layer="AUTO / Outfit Detail" className={styles.screen}>
-    <header className={styles.header}><div className={styles.brand}>E-CLOSET</div><div className={styles.title}>Outfit Detail</div><div className={styles.subtitle}>Drag, layer, and resize your pieces.</div></header>
+    <header className={styles.header}><div className={styles.brand}>E-CLOSET</div><div className={styles.title}>Outfit Detail</div><div className={styles.subtitle}>Drag, layer, and resize your pieces.</div><OutfitWeather /></header>
 
     <div ref={canvasRef} data-layer="Outfit canvas" className={styles.canvas} onPointerDown={(event) => { if (event.target === event.currentTarget) setSelectedId(undefined); }}>
       {pieces.map((piece) => {
