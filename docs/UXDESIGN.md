@@ -28,12 +28,14 @@ The same view serves `/items/new` and `/items/[id]`.
 - Add mode starts empty and shows `Cancel / Save`.
 - Edit mode loads the stored record and shows `Delete / Save`.
 - The image area opens a JPEG/PNG/WebP picker with a 10 MB limit.
+- Selecting a valid image automatically starts background removal. The original remains local, while the processed transparent result becomes the preview and saved display image.
+- Processing disables Save; failures show a clear error and Retry action.
 - Name is a real input (trimmed, maximum 60 characters).
 - Category is a six-option select with a placeholder.
 - Color Tag is a seven-color radio group. Only the selected circle receives a `1.5px #29241F` stroke.
 - Image, name, category, and tag are required before an add can be saved.
 - Delete confirms first and cleans the clothing reference from saved outfits.
-- Background removal is deferred; the original image is shown and stored.
+- New and replacement images must finish background removal before Save.
 
 ## 4. Outfit Detail / Builder
 

@@ -12,6 +12,8 @@
 | Local database | IndexedDB through Dexie | Store clothing, image Blobs, and outfits in the browser |
 | Reactive queries | `dexie-react-hooks` | Refresh views automatically after database mutations |
 | Outfit canvas | `react-rnd` | Bounded dragging and locked-aspect-ratio resizing |
+| Layer controls | React state + CSS `z-index` | Reorder, duplicate, select, and remove outfit pieces |
+| Image processing | remove.bg through `/api/remove-background` | Produce transparent WebP cutouts without exposing the API key |
 | Delivery | Vercel | Build and deploy the Next.js application |
 
 The repository remains a Next.js application. It is **not** being migrated to Vite. In a Vite project, “the Vite client” means the JavaScript application that Vite bundles and the browser executes. This project has the same browser-side responsibilities—forms, IndexedDB, and canvas interaction—but Next.js provides the build, routes, and deployment integration instead of Vite.
@@ -90,9 +92,20 @@ this.version(1).stores({
 
 Images remain binary Blob values. Components create temporary Object URLs for display and revoke them after use. Color tags store stable IDs rather than CSS values. Outfits store clothing IDs and `0–1` normalized canvas geometry rather than screenshots. Deleting clothing runs a Dexie transaction that removes its references from every saved outfit.
 
-## 4. Image Scope
+## 4. Image Processing
 
-This iteration validates JPEG, PNG, and WebP uploads up to 10 MB and stores the original Blob. The UI reads `processedImage ?? originalImage`, so transparent background-removal output can be added later without a database migration. No remove.bg request or API secret is used in the current implementation.
+The browser accepts JPEG, PNG, and WebP uploads up to 10 MB and always stores the untouched original Blob. Before background removal, it creates a temporary WebP copy with a maximum edge of 2000 px. This keeps the proxied request below Vercel's Function payload limit without reducing the locally stored original.
+
+```text
+Browser selects original image
+  → temporary client-side resize for transport
+  → POST /api/remove-background
+  → Next.js Route Handler reads REMOVE_BG_API_KEY
+  → remove.bg returns a transparent WebP
+  → browser stores originalImage + processedImage in IndexedDB
+```
+
+The API key is server-only and must be configured as `REMOVE_BG_API_KEY` in `.env.local` and in the Vercel project environment. The UI displays `processedImage ?? originalImage`; processing and retry states prevent an unprocessed new image from being saved accidentally.
 
 ## 5. State Boundaries
 
@@ -103,7 +116,7 @@ This iteration validates JPEG, PNG, and WebP uploads up to 10 MB and stores the 
 
 ## 6. Deployment
 
-Vercel runs the normal Next.js build and serves the generated application. IndexedDB still executes only in the browser; Vercel does not store wardrobe data. Future background removal should use a server-side Next.js Route Handler or Vercel Function so the provider secret is never sent to the browser.
+Vercel runs the normal Next.js build and serves the generated application. IndexedDB still executes only in the browser; Vercel does not store wardrobe data. `/api/remove-background` runs as a server-side Next.js Route Handler, and `REMOVE_BG_API_KEY` must be set for Preview and Production deployments. The provider key is never included in the client bundle.
 
 ## 7. Verification
 

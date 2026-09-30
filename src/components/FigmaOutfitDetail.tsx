@@ -12,7 +12,7 @@ import { useElementSize } from "@/hooks/useElementSize";
 import { useHorizontalDragScroll } from "@/hooks/useHorizontalDragScroll";
 import { useObjectUrl } from "@/hooks/useObjectUrl";
 import { db } from "@/lib/db";
-import { CLOTHING_CATEGORIES, getDisplayImage, type ClothingCategory, type ClothingItem, type OutfitPiece } from "@/lib/types";
+import { CLOTHING_CATEGORIES, COLOR_TAGS, getDisplayImage, type ClothingCategory, type ClothingItem, type ColorTagId, type OutfitPiece } from "@/lib/types";
 import styles from "./FigmaOutfitDetail.module.css";
 
 type FigmaOutfitDetailProps = { mode: "create" | "edit"; outfitId?: string };
@@ -59,6 +59,7 @@ export default function FigmaOutfitDetail({ mode, outfitId }: FigmaOutfitDetailP
   const [datePlaceholder, setDatePlaceholder] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [category, setCategory] = useState<ClothingCategory>("Tops");
+  const [colorTag, setColorTag] = useState<ColorTagId | "All">("All");
   const [initializedId, setInitializedId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -95,7 +96,9 @@ export default function FigmaOutfitDetail({ mode, outfitId }: FigmaOutfitDetailP
   }, [initializedId, mode, outfit]);
 
   const itemMap = useMemo(() => new Map((items ?? []).map((item) => [item.id, item])), [items]);
-  const filteredItems = (items ?? []).filter((item) => item.category === category);
+  const filteredItems = (items ?? []).filter((item) =>
+    item.category === category && (colorTag === "All" || item.colorTag === colorTag),
+  );
   const selected = pieces.find((piece) => piece.instanceId === selectedId);
   const missingOutfit = mode === "edit" && outfitQuery !== undefined && !outfitQuery.error && outfit === null;
   const databaseError = itemsQuery?.error || outfitQuery?.error || "";
@@ -191,7 +194,6 @@ export default function FigmaOutfitDetail({ mode, outfitId }: FigmaOutfitDetailP
     <header className={styles.header}><div className={styles.brand}>E-CLOSET</div><div className={styles.title}>Outfit Detail</div><div className={styles.subtitle}>Drag, layer, and resize your pieces.</div></header>
 
     <div ref={canvasRef} data-layer="Outfit canvas" className={styles.canvas} onPointerDown={(event) => { if (event.target === event.currentTarget) setSelectedId(undefined); }}>
-      {!pieces.length ? <div className={styles.canvasEmpty}>Choose a category below and add pieces from your closet.</div> : null}
       {pieces.map((piece) => {
         const item = itemMap.get(piece.clothingId);
         if (!item || !canvasSize.width || !canvasSize.height) return null;
@@ -200,25 +202,37 @@ export default function FigmaOutfitDetail({ mode, outfitId }: FigmaOutfitDetailP
           <CanvasImage item={item} />
         </Rnd>;
       })}
+      <div data-layer="Layer controls" className={styles.controls}>
+        <button className={styles.control} type="button" aria-label="Bring to front" title="Bring to front" disabled={!selected} onClick={() => moveLayer("front")}>
+          <svg aria-hidden="true" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 15V5M6.5 8.5 10 5l3.5 3.5M5 17h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+        </button>
+        <button className={styles.control} type="button" aria-label="Send to back" title="Send to back" disabled={!selected} onClick={() => moveLayer("back")}>
+          <svg aria-hidden="true" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 5v10m-3.5-3.5L10 15l3.5-3.5M5 3h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+        </button>
+        <button className={styles.control} type="button" aria-label="Duplicate piece" title="Duplicate piece" disabled={!selected} onClick={duplicate}>
+          <svg aria-hidden="true" width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="4" y="4" width="9" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.5" /><path d="M8 8h6.5A1.5 1.5 0 0 1 16 9.5V16H9.5A1.5 1.5 0 0 1 8 14.5V8Z" stroke="currentColor" strokeWidth="1.5" /></svg>
+        </button>
+        <button className={styles.control} type="button" aria-label="Remove piece" title="Remove piece" disabled={!selected} onClick={removeSelected}>
+          <svg aria-hidden="true" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="m6 6 8 8m0-8-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+        </button>
+      </div>
     </div>
 
     <label className={styles.nameField}>OUTFIT NAME<input className={styles.nameInput} value={name} maxLength={60} placeholder={datePlaceholder || "Date"} onChange={(event) => setName(event.target.value)} /></label>
-
-    <div data-layer="Layer controls" className={styles.controls}>
-      <button className={styles.control} type="button" disabled={!selected} onClick={() => moveLayer("front")}>↥ Front</button>
-      <button className={styles.control} type="button" disabled={!selected} onClick={() => moveLayer("back")}>↧ Back</button>
-      <button className={styles.control} type="button" disabled={!selected} onClick={duplicate}>⧉ Duplicate</button>
-      <button className={styles.control} type="button" disabled={!selected} onClick={removeSelected}>× Remove</button>
-    </div>
 
     <section className={`${styles.closetPanel} ${drawerOpen ? styles.closetPanelOpen : ""}`}>
       <div className={styles.panelHeader}><span>ADD FROM CLOSET</span>{drawerOpen ? <button type="button" className={styles.collapse} aria-label="Collapse closet" onClick={() => setDrawerOpen(false)}>⌄</button> : null}</div>
       {!drawerOpen ? <div data-layer="Item tray" className={styles.trays}>{TRAYS.map((tray) => <button key={tray.label} type="button" className={styles.tray} style={{ backgroundColor: tray.color }} onClick={() => { setCategory(tray.category); setDrawerOpen(true); }}><span className={styles.trayGlyph}>{tray.glyph}</span><span className={styles.trayLabel}>{tray.label}</span></button>)}</div> : <>
         <div className={styles.chips} {...chipDrag}>{CLOTHING_CATEGORIES.map((chip) => <button key={chip} type="button" className={`${styles.chip} ${category === chip ? styles.chipActive : ""}`} onClick={() => setCategory(chip)}>{chip}</button>)}</div>
+        <div data-layer="Color tag filter" className={styles.colorFilters} aria-label="Filter by color tag">
+          <span className={styles.colorFilterLabel}>COLOR</span>
+          <button type="button" className={`${styles.colorAll} ${colorTag === "All" ? styles.colorAllActive : ""}`} aria-pressed={colorTag === "All"} onClick={() => setColorTag("All")}>All</button>
+          {(Object.entries(COLOR_TAGS) as [ColorTagId, string][]).map(([id, color]) => <button key={id} type="button" className={`${styles.colorFilter} ${colorTag === id ? styles.colorFilterActive : ""}`} style={{ backgroundColor: color }} aria-label={`Filter by ${id}`} aria-pressed={colorTag === id} onClick={() => setColorTag(id)} />)}
+        </div>
         <div className={styles.drawerGrid}>
           {items === undefined ? <p className={styles.drawerState}>Loading your closet…</p> : null}
           {items?.length === 0 ? <p className={styles.drawerState}>Your closet is empty. <Link href="/items/new">Add an item in Closet.</Link></p> : null}
-          {items && items.length > 0 && filteredItems.length === 0 ? <p className={styles.drawerState}>No {category.toLowerCase()} in your closet yet.</p> : null}
+          {items && items.length > 0 && filteredItems.length === 0 ? <p className={styles.drawerState}>No {category.toLowerCase()} match these filters.</p> : null}
           {filteredItems.map((item) => <ClothingCard key={item.id} item={item} onClick={() => void addItem(item)} />)}
         </div>
       </>}

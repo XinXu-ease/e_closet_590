@@ -4,20 +4,22 @@
 .title { margin-top: 5px; color: #29241f; font-size: 32px; font-weight: 700; line-height: 1; }
 .subtitle { margin-top: 6px; color: #756e63; font-size: 13px; }
 .canvas { position: absolute; top: 124px; right: 24px; left: 24px; height: 330px; overflow: hidden; background: #fffefb; border: 1px solid #c2b8ab; border-radius: 24px; touch-action: none; }
-.canvasEmpty { position: absolute; inset: 0; display: grid; place-items: center; padding: 30px; color: #9a9288; font-size: 12px; text-align: center; pointer-events: none; }
 .piece { width: 100%; height: 100%; object-fit: contain; user-select: none; pointer-events: none; }
 .selected { outline: 1.5px solid #29241f; outline-offset: 2px; }
 .nameField { position: absolute; top: 469px; right: 24px; left: 24px; display: flex; flex-direction: column; gap: 6px; color: #756e63; font-size: 11px; font-weight: 600; }
 .nameInput { width: 100%; height: 42px; padding: 0 14px; color: #29241f; background: #fffefb; border: 1px solid #c2b8ab; border-radius: 14px; outline: 0; font-size: 14px; font-weight: 400; }
 .nameInput:focus { border: 1.5px solid #29241f; }
 .nameInput::placeholder { color: #9a9288; }
-.controls { position: absolute; top: 536px; right: 24px; left: 24px; display: flex; height: 41px; align-items: center; justify-content: space-between; padding: 0 12px; border: 1px solid #c2b8ab; border-radius: 14px; }
-.control { padding: 6px 3px; color: #29241f; background: transparent; border: 0; font-size: 11px; font-weight: 600; }
+.controls { position: absolute; top: 50%; right: 10px; z-index: 100; display: flex; width: 42px; flex-direction: column; align-items: center; gap: 2px; padding: 4px; background: transparent; border: 1px solid #c2b8ab; border-radius: 14px; transform: translateY(-50%); }
+.control { display: grid; width: 32px; height: 32px; place-items: center; padding: 0; color: #29241f; background: transparent; border: 0; border-radius: 9px; }
+.control:not(:disabled):hover { background: rgb(41 36 31 / 7%); }
+.control:not(:disabled):focus-visible { outline: 1.5px solid #29241f; outline-offset: -1px; }
 .control:disabled { color: #aaa39a; cursor: not-allowed; }
-.closetPanel { position: absolute; top: 593px; right: 16px; left: 16px; z-index: 12; height: 105px; padding: 0 8px; overflow: hidden; border-radius: 18px; transition: height .24s ease, background-color .24s ease, padding .24s ease; }
-.closetPanelOpen { height: 209px; padding: 10px 8px 8px; background: #fffefb; border: 1px solid #c2b8ab; }
+.closetPanel { position: absolute; top: 545px; right: 16px; left: 16px; z-index: 12; height: 105px; padding: 0 8px; overflow: hidden; border-radius: 18px; transition: height .24s ease, background-color .24s ease, padding .24s ease; }
+.closetPanelOpen { height: 257px; padding: 10px 10px 8px; background: #fffefb; border: 1px solid #c2b8ab; }
 .panelHeader { display: flex; height: 19px; align-items: center; justify-content: space-between; color: #756e63; font-size: 11px; font-weight: 600; }
-.collapse { display: grid; width: 24px; height: 24px; place-items: center; padding: 0; background: transparent; border: 0; transition: transform .2s ease; }
+.collapse { display: grid; width: 32px; height: 32px; place-items: center; margin: -10px -4px 0 0; padding: 0; color: #756e63; background: transparent; border: 0; border-radius: 9px; font-size: 24px; line-height: 1; cursor: pointer; transition: background-color .2s ease; }
+.collapse:focus-visible { outline: 1.5px solid #29241f; }
 .trays { display: flex; align-items: flex-start; justify-content: space-between; margin-top: 8px; }
 .tray { display: flex; width: 78px; height: 78px; flex-direction: column; align-items: center; justify-content: space-between; padding: 12px 8px; overflow: hidden; color: #29241f; border: 0; border-radius: 14px; transition: height .24s ease, padding .24s ease; }
 .trayGlyph { font-size: 27px; line-height: 1; opacity: 1; transition: opacity .15s ease, height .24s ease; }
@@ -30,13 +32,19 @@
 .chips::-webkit-scrollbar, .drawerGrid::-webkit-scrollbar { display: none; }
 .chip { flex: 0 0 auto; padding: 6px 10px; color: #756e63; background: #fffefb; border: 1px solid #c2b8ab; border-radius: 15px; font-size: 10px; }
 .chipActive { color: #29241f; font-weight: 600; background: #c7ff40; border-color: #c7ff40; }
-.drawerGrid { display: grid; height: 130px; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 12px; margin-top: 8px; padding-bottom: 8px; overflow-y: auto; scrollbar-width: none; }
+.colorFilters { display: flex; height: 22px; align-items: center; gap: 8px; margin-top: 8px; padding: 0 2px; }
+.colorFilterLabel { margin-right: 1px; color: #756e63; font-size: 9px; font-weight: 600; }
+.colorAll { height: 20px; padding: 0 8px; color: #756e63; background: #fffefb; border: 1px solid #c2b8ab; border-radius: 10px; font-size: 9px; }
+.colorAllActive { color: #29241f; border: 1.5px solid #29241f; font-weight: 600; }
+.colorFilter { width: 18px; height: 18px; flex: 0 0 18px; padding: 0; border: 1.5px solid transparent; border-radius: 50%; }
+.colorFilterActive { border-color: #29241f; }
+.drawerGrid { display: grid; height: 145px; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 12px; margin-top: 8px; padding-bottom: 8px; overflow-y: auto; scrollbar-width: none; }
 .drawerState { grid-column: 1 / -1; margin: 15px 8px; color: #756e63; font-size: 12px; line-height: 1.45; text-align: center; }
 .drawerState a { text-decoration: underline; }
-.actions { position: absolute; top: 716px; right: 24px; left: 24px; display: flex; gap: 12px; }
+.actions { position: absolute; top: 666px; right: 24px; left: 24px; display: flex; gap: 12px; }
 .action { height: 52px; flex: 1; border: 1px solid #29241f; border-radius: 16px; font-size: 14px; font-weight: 600; }
 .secondary { background: #fffefb; }
 .danger { color: #fffefb; background: #c74038; border-color: #c74038; }
 .primary { background: #c7ff40; border-color: #c7ff40; }
 .action:disabled { cursor: not-allowed; opacity: .5; }
-.error { position: absolute; top: 773px; right: 24px; left: 24px; color: #a33f39; font-size: 11px; text-align: center; }
+.error { position: absolute; top: 724px; right: 24px; left: 24px; color: #a33f39; font-size: 11px; text-align: center; }

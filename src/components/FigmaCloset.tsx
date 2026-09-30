@@ -55,13 +55,18 @@ export default function FigmaCloset() {
 
     <section className={styles.content} aria-live="polite">
       <div data-layer="Frame 1" className={styles.grid}>
+        <div className={styles.column}>
+          <Link href="/items/new" aria-label="Add item" className={styles.addCard}>
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M14 6v16M6 14h16" stroke="#29241F" strokeWidth="2" strokeLinecap="round" /></svg>
+          </Link>
+          {filteredItems.filter((_, index) => index % 2 === 1).map((item) => <ClothingCard key={item.id} item={item} />)}
+        </div>
+        <div className={styles.column}>
+          {filteredItems.filter((_, index) => index % 2 === 0).map((item) => <ClothingCard key={item.id} item={item} />)}
+        </div>
         {isLoading ? <p className={styles.state}>Loading your closet…</p> : null}
         {databaseError ? <p className={`${styles.state} ${styles.error}`}>{databaseError}</p> : null}
-        {!isLoading && !databaseError && filteredItems.length === 0 ? <p className={styles.state}>{hasFilters ? "No items match this search and category." : "Your closet is empty. Add your first piece below."}</p> : null}
-        {filteredItems.map((item) => <ClothingCard key={item.id} item={item} />)}
-        <Link href="/items/new" aria-label="Add item" className={styles.addCard}>
-          <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M14 6v16M6 14h16" stroke="#29241F" strokeWidth="2" strokeLinecap="round" /></svg>
-        </Link>
+        {!isLoading && !databaseError && filteredItems.length === 0 && hasFilters ? <p className={styles.state}>No items match this search and category.</p> : null}
       </div>
     </section>
     <BottomNavigation active="closet" />

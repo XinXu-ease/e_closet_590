@@ -19,6 +19,41 @@ type FigmaItemDetailProps = { mode: "add" | "edit"; itemId?: string };
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_PROCESSING_EDGE = 2000;
+
+async function prepareImageForRemoval(file: File) {
+  const bitmap = await createImageBitmap(file);
+  try {
+    const scale = Math.min(1, MAX_PROCESSING_EDGE / Math.max(bitmap.width, bitmap.height));
+    const width = Math.max(1, Math.round(bitmap.width * scale));
+    const height = Math.max(1, Math.round(bitmap.height * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("Image canvas is unavailable.");
+    context.drawImage(bitmap, 0, 0, width, height);
+
+    const blob = await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob(resolve, "image/webp", 0.88);
+    });
+    if (!blob) throw new Error("The image could not be prepared.");
+    return new File([blob], `${file.name.replace(/\.[^.]+$/, "") || "clothing"}.webp`, {
+      type: "image/webp",
+    });
+  } finally {
+    bitmap.close();
+  }
+}
+
+async function responseError(response: Response) {
+  try {
+    const payload = await response.json() as { error?: string };
+    return payload.error || "Background removal failed.";
+  } catch {
+    return "Background removal failed.";
+  }
+}
 
 function formatError(error: unknown) {
   if (error instanceof DOMException && error.name === "QuotaExceededError") {
@@ -44,6 +79,10 @@ export default function FigmaItemDetail({ mode, itemId }: FigmaItemDetailProps) 
   const [category, setCategory] = useState<ClothingCategory | "">("");
   const [colorTag, setColorTag] = useState<ColorTagId | "">("");
   const [newImage, setNewImage] = useState<File>();
+  const [processedImage, setProcessedImage] = useState<Blob>();
+  const [processing, setProcessing] = useState(false);
+  const [processingError, setProcessingError] = useState("");
+  const processingRequest = useRef(0);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -58,13 +97,50 @@ export default function FigmaItemDetail({ mode, itemId }: FigmaItemDetailProps) 
     }
   }, [initializedId, item, mode]);
 
-  const displayBlob = newImage ?? (item ? getDisplayImage(item) : undefined);
+  const displayBlob = newImage
+    ? processedImage ?? newImage
+    : item ? getDisplayImage(item) : undefined;
   const imageUrl = useObjectUrl(displayBlob);
   const isLoading = mode === "edit" && itemId && itemQuery === undefined;
   const isMissing = mode === "edit" && itemId && itemQuery !== undefined && !loadError && item === null;
   const isUnavailable = mode === "edit" && Boolean(loadError);
   const isBlocked = Boolean(isMissing || isUnavailable);
-  const isAddInvalid = mode === "add" && (!displayBlob || !name.trim() || !category || !colorTag);
+  const newImageNeedsProcessing = Boolean(newImage && !processedImage);
+  const isAddInvalid = mode === "add" && (!newImage || !processedImage || !name.trim() || !category || !colorTag);
+
+  const removeBackground = async (file: File) => {
+    const requestId = ++processingRequest.current;
+    setProcessing(true);
+    setProcessingError("");
+    setProcessedImage(undefined);
+    try {
+      const preparedImage = await prepareImageForRemoval(file);
+      const body = new FormData();
+      body.append("image", preparedImage);
+      const response = await fetch("/api/remove-background", {
+        method: "POST",
+        body,
+      });
+      if (!response.ok) throw new Error(await responseError(response));
+      const result = await response.blob();
+      if (!result.type.startsWith("image/")) {
+        throw new Error("Background removal returned an invalid image.");
+      }
+      if (processingRequest.current === requestId) {
+        setProcessedImage(result);
+      }
+    } catch (processingFailure) {
+      if (processingRequest.current === requestId) {
+        setProcessingError(
+          processingFailure instanceof Error
+            ? processingFailure.message
+            : "Background removal failed.",
+        );
+      }
+    } finally {
+      if (processingRequest.current === requestId) setProcessing(false);
+    }
+  };
 
   const handleImage = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -80,11 +156,15 @@ export default function FigmaItemDetail({ mode, itemId }: FigmaItemDetailProps) 
       return;
     }
     setNewImage(file);
+    setProcessedImage(undefined);
     setError("");
+    void removeBackground(file);
   };
 
   const validate = () => {
     if (!displayBlob) return "Add an image before saving.";
+    if (processing) return "Wait for background removal to finish.";
+    if (newImageNeedsProcessing) return "Remove the background before saving.";
     if (!name.trim()) return "Enter a name before saving.";
     if (!category) return "Choose a category before saving.";
     if (!colorTag) return "Choose a color tag before saving.";
@@ -108,6 +188,7 @@ export default function FigmaItemDetail({ mode, itemId }: FigmaItemDetailProps) 
           category: category as ClothingCategory,
           colorTag: colorTag as ColorTagId,
           originalImage: newImage as Blob,
+          processedImage: processedImage as Blob,
           createdAt: now,
           updatedAt: now,
         });
@@ -118,7 +199,7 @@ export default function FigmaItemDetail({ mode, itemId }: FigmaItemDetailProps) 
           category: category as ClothingCategory,
           colorTag: colorTag as ColorTagId,
           originalImage: newImage ?? item.originalImage,
-          processedImage: newImage ? undefined : item.processedImage,
+          processedImage: newImage ? processedImage : item.processedImage,
           updatedAt: now,
         });
       }
@@ -175,12 +256,15 @@ export default function FigmaItemDetail({ mode, itemId }: FigmaItemDetailProps) 
           </div>
         </fieldset>
       </div>
-      <p className={`${styles.status} ${error ? styles.error : ""}`} role="status">{isLoading ? "Loading item…" : error || (saving ? "Saving…" : "")}</p>
+      <div className={`${styles.status} ${error || processingError ? styles.error : ""}`} role="status">
+        {isLoading ? "Loading item…" : error || processingError || (processing ? "Removing background…" : processedImage && newImage ? "Background removed." : saving ? "Saving…" : "")}
+        {processingError && newImage ? <button type="button" className={styles.retry} onClick={() => void removeBackground(newImage)} disabled={processing}>Retry</button> : null}
+      </div>
     </form> : null}
 
     {!isBlocked ? <div data-layer="Frame 16" className={styles.actions}>
       {mode === "edit" ? <button type="button" className={`${styles.action} ${styles.danger}`} onClick={() => void remove()} disabled={saving || !item}>Delete</button> : <button type="button" className={`${styles.action} ${styles.secondary}`} onClick={() => router.push("/closet")} disabled={saving}>Cancel</button>}
-      <button type="button" className={`${styles.action} ${styles.primary}`} onClick={() => void save()} disabled={saving || Boolean(isLoading) || isAddInvalid}>Save</button>
+      <button type="button" className={`${styles.action} ${styles.primary}`} onClick={() => void save()} disabled={saving || processing || Boolean(isLoading) || isAddInvalid || newImageNeedsProcessing}>Save</button>
     </div> : null}
 
     <header data-layer="Frame 5" className={styles.topBar}>
