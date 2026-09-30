@@ -6,4 +6,6 @@ out/
 .env.*.local
 npm-debug.log*
 *.tsbuildinfo
+__pycache__/
+*.pyc
 src/generated/figma-layout.local.json

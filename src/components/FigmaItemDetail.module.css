@@ -1,0 +1,284 @@
+.screen {
+  position: relative;
+  width: 402px;
+  height: 874px;
+  overflow: hidden;
+  background: #f7f2ec;
+  border-radius: 32px;
+}
+
+.topBar {
+  position: absolute;
+  top: 15px;
+  left: 0;
+  width: 402px;
+  height: 55px;
+  overflow: hidden;
+}
+
+.back {
+  position: absolute;
+  top: 12px;
+  left: 24px;
+  padding: 0;
+  color: #29241f;
+  background: transparent;
+  border: 0;
+  font-size: 26px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.title {
+  position: absolute;
+  top: 15.5px;
+  left: 57px;
+  color: #29241f;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.mode {
+  position: absolute;
+  top: 13.5px;
+  left: 334px;
+  display: grid;
+  width: 43px;
+  height: 28px;
+  place-items: center;
+  color: #29241f;
+  background: #c7ff40;
+  border-radius: 14px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.form {
+  position: absolute;
+  inset: 0;
+}
+
+.imageButton {
+  position: absolute;
+  top: 92px;
+  left: 24px;
+  display: block;
+  width: 354px;
+  height: 300px;
+  overflow: hidden;
+  padding: 0;
+  background: #fffefb;
+  border: 0;
+  border-radius: 24px;
+  outline: 2px solid #c2b8ab;
+  outline-offset: -2px;
+}
+
+.imageButton.hasImage {
+  display: grid;
+  place-items: center;
+  background: #e8cfa8;
+  outline: 0;
+}
+
+.imageButton img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain !important;
+  object-position: center center !important;
+}
+
+.uploadIcon {
+  position: absolute;
+  top: 76px;
+  left: 145px;
+  display: grid;
+  width: 64px;
+  height: 64px;
+  place-items: center;
+  color: #29241f;
+  background: #c7ff40;
+  border-radius: 50%;
+  font-size: 34px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.uploadPrompt {
+  position: absolute;
+  top: 158px;
+  left: 0;
+  width: 100%;
+  color: #29241f;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.uploadHelper {
+  position: absolute;
+  top: 187px;
+  left: 0;
+  width: 100%;
+  color: #756e63;
+  font-size: 12px;
+  font-weight: 400;
+  text-align: center;
+}
+
+.hiddenInput {
+  display: none;
+}
+
+.fields {
+  position: absolute;
+  top: 422px;
+  left: 24px;
+  display: flex;
+  width: 354px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #756e63;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.control {
+  width: 100%;
+  height: 42px;
+  padding: 0 16px;
+  color: #29241f;
+  background: #fffefb;
+  border: 1px solid #c2b8ab;
+  border-radius: 14px;
+  outline: none;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.control:focus {
+  border-color: #29241f;
+}
+
+.control:invalid,
+.control::placeholder {
+  color: #756e63;
+}
+
+.tags {
+  display: flex;
+  height: 24px;
+  align-items: center;
+  gap: 12px;
+}
+
+.tagLabel {
+  position: relative;
+  display: block;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.tagInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.tagCircle {
+  display: block;
+  width: 24px;
+  height: 24px;
+  border: 1.5px solid transparent;
+  border-radius: 50%;
+}
+
+.tagInput:checked + .tagCircle {
+  border-color: #29241f;
+}
+
+.status {
+  position: absolute;
+  top: 642px;
+  left: 26px;
+  width: 350px;
+  margin: 0;
+  color: #756e63;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.error {
+  color: #a33f39;
+}
+
+.actions {
+  position: absolute;
+  top: 790px;
+  left: 24px;
+  display: flex;
+  width: 354px;
+  align-items: center;
+  gap: 13px;
+}
+
+.action {
+  display: flex;
+  height: 52px;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.secondary {
+  color: #29241f;
+  background: #fffefb;
+  outline: 1px solid #c2b8ab;
+  outline-offset: -1px;
+}
+
+.primary {
+  color: #29241f;
+  background: #c7ff40;
+  outline: 1px solid #c7ff40;
+  outline-offset: -1px;
+}
+
+.danger {
+  color: #fffefb;
+  background: #c74038;
+  outline: 1px solid #c74038;
+  outline-offset: -1px;
+}
+
+.action:disabled {
+  cursor: not-allowed;
+  opacity: .5;
+}
+
+.notFound {
+  position: absolute;
+  top: 180px;
+  right: 32px;
+  left: 32px;
+  color: #756e63;
+  line-height: 1.6;
+  text-align: center;
+}

@@ -1,100 +1,192 @@
 "use client";
+/* eslint-disable @next/next/no-img-element -- IndexedDB Blob URLs are local and cannot use the Next image optimizer. */
 
 import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { useLiveQuery } from "dexie-react-hooks";
+import { useObjectUrl } from "@/hooks/useObjectUrl";
+import { db, deleteClothingItemCascade } from "@/lib/db";
+import {
+  CLOTHING_CATEGORIES,
+  COLOR_TAGS,
+  getDisplayImage,
+  type ClothingCategory,
+  type ColorTagId,
+} from "@/lib/types";
+import styles from "./FigmaItemDetail.module.css";
 
-type FigmaItemDetailProps = {
-  mode: "add" | "edit";
-};
+type FigmaItemDetailProps = { mode: "add" | "edit"; itemId?: string };
 
-export default function FigmaItemDetail({ mode }: FigmaItemDetailProps) {
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+function formatError(error: unknown) {
+  if (error instanceof DOMException && error.name === "QuotaExceededError") {
+    return "This browser does not have enough local storage for that image.";
+  }
+  return "The change could not be saved. Check that local browser storage is available.";
+}
+
+export default function FigmaItemDetail({ mode, itemId }: FigmaItemDetailProps) {
   const router = useRouter();
-  const isEdit = mode === "edit";
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const itemQuery = useLiveQuery(async () => {
+    try {
+      return { item: itemId ? (await db.clothingItems.get(itemId)) ?? null : null, error: "" };
+    } catch {
+      return { item: null, error: "Your local closet could not be opened in this browser." };
+    }
+  }, [itemId]);
+  const item = itemQuery?.item;
+  const loadError = itemQuery?.error ?? "";
+  const [initializedId, setInitializedId] = useState<string | null>(null);
+  const [name, setName] = useState("");
+  const [category, setCategory] = useState<ClothingCategory | "">("");
+  const [colorTag, setColorTag] = useState<ColorTagId | "">("");
+  const [newImage, setNewImage] = useState<File>();
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  return (
-<div data-layer={isEdit ? "AUTO / Item Detail — Edit" : "AUTO / Item Detail — Add"} className={isEdit ? "AutoItemDetailEdit" : "AutoItemDetailAdd"} style={{width: 402, height: 874, position: 'relative', background: 'var(--Color-Paper, #F7F2EC)', overflow: 'hidden', borderRadius: 32}}>
-  {isEdit ? (
-    <div data-layer="Image / Existing item" className="ImageExistingItem" style={{width: 354, height: 300, left: 24, top: 92, position: 'absolute', background: 'var(--Color-Sand, #E8CFA8)', borderRadius: 24}} />
-  ) : (
-  <div data-layer="Image picker / Empty" className="ImagePickerEmpty" style={{width: 354, height: 300, left: 24, top: 92, position: 'absolute', background: 'var(--Color-Surface, #FFFEFB)', overflow: 'hidden', borderRadius: 24, outline: '2px var(--Color-Line, #C2B8AB) solid', outlineOffset: '-2px'}}>
-    <div data-svg-wrapper data-layer="Upload icon" className="UploadIcon" style={{left: 145, top: 76, position: 'absolute'}}>
-      <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="64" height="64" rx="32" fill="var(--Color-Accent, #C7FF40)"/>
-      <path d="M30.5909 41.75V23H33.7727V41.75H30.5909ZM22.8068 33.9659V30.7841H41.5568V33.9659H22.8068Z" fill="var(--Color-Ink, #29241F)"/>
-      </svg>
-    </div>
-    <div data-layer="Prompt" className="Prompt" style={{left: 93, top: 158, position: 'absolute', color: 'var(--Color-Ink, #29241F)', fontSize: 15, fontFamily: 'Inter', fontWeight: '600', wordWrap: 'break-word'}}>Tap to choose a photo</div>
-    <div data-layer="Helper" className="Helper" style={{left: 65, top: 187, position: 'absolute', color: 'var(--Color-Muted, #756E63)', fontSize: 12, fontFamily: 'Inter', fontWeight: '400', wordWrap: 'break-word'}}>Background removal runs automatically</div>
-  </div>
-  )}
-  <div data-layer="Frame 6" className="Frame6" style={{width: 354, left: 24, top: 422, position: 'absolute', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start', gap: 12, display: 'inline-flex'}}>
-    <div data-layer="Frame 7" className="Frame7" style={{alignSelf: 'stretch', overflow: 'hidden', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start', gap: 8, display: 'flex'}}>
-      <div data-layer="Label / Name" className="LabelName" style={{color: 'var(--Color-Muted, #756E63)', fontSize: 12, fontFamily: 'Inter', fontWeight: '600', wordWrap: 'break-word'}}>Name</div>
-      <div data-layer="Field / Name" className="FieldName" style={{alignSelf: 'stretch', height: 42, position: 'relative', background: 'var(--Color-Surface, #FFFEFB)', overflow: 'hidden', borderRadius: 14, outline: '1px var(--Color-Line, #C2B8AB) solid', outlineOffset: '-1px'}}>
-        <div data-layer="Value" className="Value" style={{left: 16, top: 13, position: 'absolute', color: isEdit ? 'var(--Color-Ink, #29241F)' : 'var(--Color-Muted, #756E63)', fontSize: 14, fontFamily: 'Inter', fontWeight: '400', wordWrap: 'break-word'}}>{isEdit ? "Linen shirt" : "Item name"}</div>
+  useEffect(() => {
+    if (mode === "edit" && item && initializedId !== item.id) {
+      // A live database record initializes this local, editable draft once.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setName(item.name);
+      setCategory(item.category);
+      setColorTag(item.colorTag);
+      setInitializedId(item.id);
+    }
+  }, [initializedId, item, mode]);
+
+  const displayBlob = newImage ?? (item ? getDisplayImage(item) : undefined);
+  const imageUrl = useObjectUrl(displayBlob);
+  const isLoading = mode === "edit" && itemId && itemQuery === undefined;
+  const isMissing = mode === "edit" && itemId && itemQuery !== undefined && !loadError && item === null;
+  const isUnavailable = mode === "edit" && Boolean(loadError);
+  const isBlocked = Boolean(isMissing || isUnavailable);
+  const isAddInvalid = mode === "add" && (!displayBlob || !name.trim() || !category || !colorTag);
+
+  const handleImage = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!ACCEPTED_TYPES.includes(file.type)) {
+      setError("Choose a JPEG, PNG, or WebP image.");
+      event.target.value = "";
+      return;
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      setError("The image must be 10 MB or smaller.");
+      event.target.value = "";
+      return;
+    }
+    setNewImage(file);
+    setError("");
+  };
+
+  const validate = () => {
+    if (!displayBlob) return "Add an image before saving.";
+    if (!name.trim()) return "Enter a name before saving.";
+    if (!category) return "Choose a category before saving.";
+    if (!colorTag) return "Choose a color tag before saving.";
+    return "";
+  };
+
+  const save = async () => {
+    const validationError = validate();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+    setSaving(true);
+    setError("");
+    try {
+      const now = Date.now();
+      if (mode === "add") {
+        await db.clothingItems.add({
+          id: crypto.randomUUID(),
+          name: name.trim(),
+          category: category as ClothingCategory,
+          colorTag: colorTag as ColorTagId,
+          originalImage: newImage as Blob,
+          createdAt: now,
+          updatedAt: now,
+        });
+      } else if (item) {
+        await db.clothingItems.put({
+          ...item,
+          name: name.trim(),
+          category: category as ClothingCategory,
+          colorTag: colorTag as ColorTagId,
+          originalImage: newImage ?? item.originalImage,
+          processedImage: newImage ? undefined : item.processedImage,
+          updatedAt: now,
+        });
+      }
+      router.push("/closet");
+    } catch (saveError) {
+      setError(formatError(saveError));
+      setSaving(false);
+    }
+  };
+
+  const remove = async () => {
+    if (!item || !window.confirm(`Delete “${item.name}” from your closet?`)) return;
+    setSaving(true);
+    setError("");
+    try {
+      await deleteClothingItemCascade(item.id);
+      router.push("/closet");
+    } catch (deleteError) {
+      setError(formatError(deleteError));
+      setSaving(false);
+    }
+  };
+
+  return <div data-layer={mode === "edit" ? "AUTO / Item Detail — Edit" : "AUTO / Item Detail — Add"} className={styles.screen}>
+    {isBlocked ? <div className={styles.notFound}>{loadError || "This clothing item no longer exists."}<br /><button type="button" onClick={() => router.push("/closet")}>Return to Closet</button></div> : null}
+
+    {!isBlocked ? <form className={styles.form} onSubmit={(event) => { event.preventDefault(); void save(); }}>
+      <button type="button" data-layer={imageUrl ? "Image / Existing item" : "Image picker / Empty"} className={`${styles.imageButton} ${imageUrl ? styles.hasImage : ""}`} onClick={() => fileInputRef.current?.click()} disabled={saving}>
+        {imageUrl ? <img src={imageUrl} alt="Selected clothing" /> : <>
+          <span className={styles.uploadIcon} aria-hidden="true">＋</span>
+          <span className={styles.uploadPrompt}>Tap to choose a photo</span>
+          <span className={styles.uploadHelper}>JPEG, PNG or WebP · max 10 MB</span>
+        </>}
+      </button>
+      <input ref={fileInputRef} className={styles.hiddenInput} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleImage} />
+
+      <div data-layer="Frame 6" className={styles.fields}>
+        <label data-layer="Frame 7" className={styles.field}>Name
+          <input data-layer="Field / Name" className={styles.control} value={name} maxLength={60} placeholder="Item name" onChange={(event) => setName(event.target.value)} disabled={saving} />
+        </label>
+        <label data-layer="Frame 8" className={styles.field}>Category
+          <select data-layer="Field / Category" className={styles.control} value={category} onChange={(event) => setCategory(event.target.value as ClothingCategory | "")} disabled={saving} required>
+            <option value="" disabled>Choose a category</option>
+            {CLOTHING_CATEGORIES.map((option) => <option key={option} value={option}>{option}</option>)}
+          </select>
+        </label>
+        <fieldset data-layer="Frame 9" className={styles.field} style={{ border: 0, padding: 0, margin: 0 }}>
+          <legend>Tag</legend>
+          <div data-layer="Frame 10" className={styles.tags}>
+            {(Object.entries(COLOR_TAGS) as [ColorTagId, string][]).map(([id, color]) => <label key={id} className={styles.tagLabel} aria-label={id}>
+              <input className={styles.tagInput} type="radio" name="color-tag" value={id} checked={colorTag === id} onChange={() => setColorTag(id)} disabled={saving} />
+              <span className={styles.tagCircle} style={{ backgroundColor: color }} />
+            </label>)}
+          </div>
+        </fieldset>
       </div>
-    </div>
-    <div data-layer="Frame 8" className="Frame8" style={{alignSelf: 'stretch', overflow: 'hidden', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start', gap: 8, display: 'flex'}}>
-      <div data-layer="Label / Category" className="LabelCategory" style={{color: 'var(--Color-Muted, #756E63)', fontSize: 12, fontFamily: 'Inter', fontWeight: '600', wordWrap: 'break-word'}}>Category</div>
-      <div data-layer="Field / Category" className="FieldCategory" style={{alignSelf: 'stretch', height: 42, position: 'relative', background: 'var(--Color-Surface, #FFFEFB)', overflow: 'hidden', borderRadius: 14, outline: '1px var(--Color-Line, #C2B8AB) solid', outlineOffset: '-1px'}}>
-        <div data-layer="Value" className="Value" style={{left: 16, top: 13, position: 'absolute'}}><span style={{color: isEdit ? 'var(--Color-Ink, #29241F)' : 'var(--Color-Muted, #756E63)', fontSize: 14, fontFamily: 'Inter', fontWeight: '400', wordWrap: 'break-word'}}>{isEdit ? "Tops   " : "Choose a category   "}</span><span style={{color: isEdit ? 'var(--Color-Ink, #29241F)' : 'var(--Color-Muted, #756E63)', fontSize: 14, fontFamily: 'Inter', fontWeight: '700', wordWrap: 'break-word'}}>▾</span></div>
-      </div>
-    </div>
-    <div data-layer="Frame 9" className="Frame9" style={{alignSelf: 'stretch', overflow: 'hidden', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start', gap: 8, display: 'flex'}}>
-      <div data-layer="Label / Category" className="LabelCategory" style={{color: 'var(--Color-Muted, #756E63)', fontSize: 12, fontFamily: 'Inter', fontWeight: '600', wordWrap: 'break-word'}}>Tag</div>
-      <div data-layer="Frame 10" className="Frame10" style={{alignSelf: 'stretch', overflow: 'hidden', justifyContent: 'flex-start', alignItems: 'center', gap: 12, display: 'inline-flex'}}>
-        <div data-svg-wrapper data-layer="Ellipse 6" className="Ellipse6">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="12" cy="12" r="12" fill="#DD6C66"/>
-          </svg>
-        </div>
-        <div data-svg-wrapper data-layer="Ellipse 1" className="Ellipse1">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="12" cy="12" r="11.5" fill="#EDC2B8" stroke="#D1CCC2"/>
-          </svg>
-        </div>
-        <div data-svg-wrapper data-layer="Ellipse 3" className="Ellipse3">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="12" cy="12" r="12" fill="#E8CFA8"/>
-          </svg>
-        </div>
-        <div data-svg-wrapper data-layer="Ellipse 7" className="Ellipse7">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="12" cy="12" r="12" fill="#EBF521"/>
-          </svg>
-        </div>
-        <div data-svg-wrapper data-layer="Ellipse 4" className="Ellipse4">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="12" cy="12" r="12" fill="#AAD9AC"/>
-          </svg>
-        </div>
-        <div data-svg-wrapper data-layer="Ellipse 2" className="Ellipse2">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="12" cy="12" r="12" fill="#A9C6F2"/>
-          </svg>
-        </div>
-        <div data-svg-wrapper data-layer="Ellipse 5" className="Ellipse5">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="12" cy="12" r="12" fill="#A99BE8"/>
-          </svg>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div data-layer="Frame 16" className="Frame16" style={{left: 24, top: 790, position: 'absolute', justifyContent: 'flex-start', alignItems: 'center', gap: 13, display: 'inline-flex'}}>
-    <button type="button" data-layer={isEdit ? "Action / Delete" : "Action / Cancel"} className={isEdit ? "ActionDelete" : "ActionCancel"} onClick={() => router.push('/closet')} style={{paddingLeft: isEdit ? 63 : 61, paddingRight: isEdit ? 63 : 61, paddingTop: 17, paddingBottom: 17, background: isEdit ? 'var(--Color-Danger, #C74038)' : 'var(--Color-Surface, #FFFEFB)', overflow: 'hidden', border: 0, borderRadius: 16, outline: isEdit ? '1px var(--Color-Danger, #C74038) solid' : '1px var(--Color-Line, #C2B8AB) solid', outlineOffset: '-1px', justifyContent: 'center', alignItems: 'center', gap: 10, display: 'flex'}}>
-      <div data-layer="Label" className="Label" style={{color: isEdit ? 'var(--Color-Surface, #FFFEFB)' : 'var(--Color-Ink, #29241F)', fontSize: 14, fontFamily: 'Inter', fontWeight: '600', wordWrap: 'break-word'}}>{isEdit ? "Delete" : "Cancel"}</div>
-    </button>
-    <button type="button" data-layer="Action / Save" className="ActionSave" onClick={() => router.push('/closet')} style={{paddingLeft: 68, paddingRight: 68, paddingTop: 17, paddingBottom: 17, background: 'var(--Color-Accent, #C7FF40)', overflow: 'hidden', border: 0, borderRadius: 16, outline: '1px var(--Color-Accent, #C7FF40) solid', outlineOffset: '-1px', justifyContent: 'center', alignItems: 'center', gap: 10, display: 'flex'}}>
-      <div data-layer="Label" className="Label" style={{color: 'var(--Color-Ink, #29241F)', fontSize: 14, fontFamily: 'Inter', fontWeight: '600', wordWrap: 'break-word'}}>Save</div>
-    </button>
-  </div>
-  <div data-layer="Frame 5" className="Frame5" style={{width: 402, height: 55, left: 0, top: 15, position: 'absolute', overflow: 'hidden'}}>
-    <button type="button" aria-label="Back to Closet" data-layer="Back" className="Back" onClick={() => router.push('/closet')} style={{left: 24, top: 12, position: 'absolute', padding: 0, border: 0, background: 'transparent', color: 'var(--Color-Ink, #29241F)', fontSize: 26, fontFamily: 'Inter', fontWeight: '400', wordWrap: 'break-word'}}>←</button>
-    <div data-layer="Title" className="Title" style={{left: 57, top: 15.50, position: 'absolute', color: 'var(--Color-Ink, #29241F)', fontSize: 20, fontFamily: 'Inter', fontWeight: '700', wordWrap: 'break-word'}}>Item Detail</div>
-    <div data-layer="Mode" className="Mode" style={{width: 43, height: 28, left: 334, top: 13.50, position: 'absolute', background: 'var(--Color-Accent, #C7FF40)', overflow: 'hidden', borderRadius: 14}}>
-      <div data-layer="Label" className="Label" style={{left: isEdit ? 8 : 10, top: 7, position: 'absolute', color: 'var(--Color-Ink, #29241F)', fontSize: 11, fontFamily: 'Inter', fontWeight: '600', wordWrap: 'break-word'}}>{isEdit ? "EDIT" : "ADD"}</div>
-    </div>
-  </div>
-</div>
-  );
+      <p className={`${styles.status} ${error ? styles.error : ""}`} role="status">{isLoading ? "Loading item…" : error || (saving ? "Saving…" : "")}</p>
+    </form> : null}
+
+    {!isBlocked ? <div data-layer="Frame 16" className={styles.actions}>
+      {mode === "edit" ? <button type="button" className={`${styles.action} ${styles.danger}`} onClick={() => void remove()} disabled={saving || !item}>Delete</button> : <button type="button" className={`${styles.action} ${styles.secondary}`} onClick={() => router.push("/closet")} disabled={saving}>Cancel</button>}
+      <button type="button" className={`${styles.action} ${styles.primary}`} onClick={() => void save()} disabled={saving || Boolean(isLoading) || isAddInvalid}>Save</button>
+    </div> : null}
+
+    <header data-layer="Frame 5" className={styles.topBar}>
+      <button type="button" aria-label="Back to Closet" className={styles.back} onClick={() => router.push("/closet")}>←</button>
+      <div data-layer="Title" className={styles.title}>Item Detail</div>
+      <div data-layer="Mode" className={styles.mode}>{mode === "edit" ? "EDIT" : "ADD"}</div>
+    </header>
+  </div>;
 }

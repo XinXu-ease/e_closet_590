@@ -1,0 +1,42 @@
+.screen { position: relative; width: min(402px, 100vw); height: 874px; overflow: hidden; background: #f7f2ec; border-radius: 32px; }
+.header { position: absolute; top: 20px; right: 24px; left: 24px; padding: 5px 4px; }
+.brand { color: #756e63; font-size: 11px; font-weight: 600; }
+.title { margin-top: 5px; color: #29241f; font-size: 32px; font-weight: 700; line-height: 1; }
+.subtitle { margin-top: 6px; color: #756e63; font-size: 13px; }
+.canvas { position: absolute; top: 124px; right: 24px; left: 24px; height: 330px; overflow: hidden; background: #fffefb; border: 1px solid #c2b8ab; border-radius: 24px; touch-action: none; }
+.canvasEmpty { position: absolute; inset: 0; display: grid; place-items: center; padding: 30px; color: #9a9288; font-size: 12px; text-align: center; pointer-events: none; }
+.piece { width: 100%; height: 100%; object-fit: contain; user-select: none; pointer-events: none; }
+.selected { outline: 1.5px solid #29241f; outline-offset: 2px; }
+.nameField { position: absolute; top: 469px; right: 24px; left: 24px; display: flex; flex-direction: column; gap: 6px; color: #756e63; font-size: 11px; font-weight: 600; }
+.nameInput { width: 100%; height: 42px; padding: 0 14px; color: #29241f; background: #fffefb; border: 1px solid #c2b8ab; border-radius: 14px; outline: 0; font-size: 14px; font-weight: 400; }
+.nameInput:focus { border: 1.5px solid #29241f; }
+.nameInput::placeholder { color: #9a9288; }
+.controls { position: absolute; top: 536px; right: 24px; left: 24px; display: flex; height: 41px; align-items: center; justify-content: space-between; padding: 0 12px; border: 1px solid #c2b8ab; border-radius: 14px; }
+.control { padding: 6px 3px; color: #29241f; background: transparent; border: 0; font-size: 11px; font-weight: 600; }
+.control:disabled { color: #aaa39a; cursor: not-allowed; }
+.closetPanel { position: absolute; top: 593px; right: 16px; left: 16px; z-index: 12; height: 105px; padding: 0 8px; overflow: hidden; border-radius: 18px; transition: height .24s ease, background-color .24s ease, padding .24s ease; }
+.closetPanelOpen { height: 209px; padding: 10px 8px 8px; background: #fffefb; border: 1px solid #c2b8ab; }
+.panelHeader { display: flex; height: 19px; align-items: center; justify-content: space-between; color: #756e63; font-size: 11px; font-weight: 600; }
+.collapse { display: grid; width: 24px; height: 24px; place-items: center; padding: 0; background: transparent; border: 0; transition: transform .2s ease; }
+.trays { display: flex; align-items: flex-start; justify-content: space-between; margin-top: 8px; }
+.tray { display: flex; width: 78px; height: 78px; flex-direction: column; align-items: center; justify-content: space-between; padding: 12px 8px; overflow: hidden; color: #29241f; border: 0; border-radius: 14px; transition: height .24s ease, padding .24s ease; }
+.trayGlyph { font-size: 27px; line-height: 1; opacity: 1; transition: opacity .15s ease, height .24s ease; }
+.trayLabel { font-size: 10px; font-weight: 600; transition: transform .24s ease; }
+.closetPanelOpen .tray { height: 30px; padding: 7px 10px; }
+.closetPanelOpen .trayGlyph { height: 0; opacity: 0; }
+.closetPanelOpen .trayLabel { transform: translateY(-1px); }
+.chips { display: flex; gap: 5px; margin-top: 8px; overflow-x: auto; cursor: grab; user-select: none; scrollbar-width: none; }
+.chips[data-dragging="true"] { cursor: grabbing; }
+.chips::-webkit-scrollbar, .drawerGrid::-webkit-scrollbar { display: none; }
+.chip { flex: 0 0 auto; padding: 6px 10px; color: #756e63; background: #fffefb; border: 1px solid #c2b8ab; border-radius: 15px; font-size: 10px; }
+.chipActive { color: #29241f; font-weight: 600; background: #c7ff40; border-color: #c7ff40; }
+.drawerGrid { display: grid; height: 130px; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 12px; margin-top: 8px; padding-bottom: 8px; overflow-y: auto; scrollbar-width: none; }
+.drawerState { grid-column: 1 / -1; margin: 15px 8px; color: #756e63; font-size: 12px; line-height: 1.45; text-align: center; }
+.drawerState a { text-decoration: underline; }
+.actions { position: absolute; top: 716px; right: 24px; left: 24px; display: flex; gap: 12px; }
+.action { height: 52px; flex: 1; border: 1px solid #29241f; border-radius: 16px; font-size: 14px; font-weight: 600; }
+.secondary { background: #fffefb; }
+.danger { color: #fffefb; background: #c74038; border-color: #c74038; }
+.primary { background: #c7ff40; border-color: #c7ff40; }
+.action:disabled { cursor: not-allowed; opacity: .5; }
+.error { position: absolute; top: 773px; right: 24px; left: 24px; color: #a33f39; font-size: 11px; text-align: center; }

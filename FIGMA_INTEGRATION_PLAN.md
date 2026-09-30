@@ -104,19 +104,11 @@ It must not infer or generate:
 
 Generated Figma data should remain separate from hand-written React components.
 
-## 6. Existing Sync Script
+## 6. Current Code Handoff
 
-If `scripts/sync-figma.mjs` remains part of the workflow, its screen allowlist should be updated during the code migration to match the four active views.
+The earlier Figma REST synchronization script and generated layout JSON have been removed. They described the retired seven-screen prototype and were not used by the running application.
 
-The script should:
-
-- Read only explicitly named active frames
-- Preserve component and variant metadata needed by the implementation
-- Write to a generated JSON file rather than application source files
-- Report missing or unsupported nodes clearly
-- Never overwrite business logic
-
-The Figma access token remains local and must not be committed.
+The current workflow is a reviewed, one-time handoff from Figma into React components. Visual updates are applied deliberately to the corresponding `Figma*.tsx` component instead of automatically overwriting application source files.
 
 ## 7. Locofy Design-to-Code Workflow
 
