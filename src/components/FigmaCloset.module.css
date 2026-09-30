@@ -14,6 +14,7 @@
 .filterActive { color: #29241f; font-weight: 600; background: #c7ff40; border-color: #c7ff40; }
 .content { position: absolute; top: 224px; right: 19px; bottom: 72px; left: 20px; padding-bottom: 20px; overflow-y: auto; scrollbar-width: none; }
 .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 20px; }
+.column { display: flex; min-width: 0; flex-direction: column; gap: 20px; }
 .addCard { display: grid; width: 100%; height: 72px; place-items: center; background: #fffefb; border: 1px solid #c2b8ab; border-radius: 14px; }
 .state { grid-column: 1 / -1; padding: 30px 16px; color: #756e63; font-size: 13px; line-height: 1.5; text-align: center; }
 .error { color: #a33f39; }
