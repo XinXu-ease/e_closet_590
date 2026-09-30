@@ -1,6 +1,6 @@
-# E-Wardrobe Figma → React Integration Plan
+# E-Closet Figma Integration Plan
 
-更新时间：2026-09-15
+更新时间：2026-09-26
 
 ## 1. Current State
 
@@ -17,401 +17,194 @@
 
 ### Local project
 
-Project folder:
+The repository currently contains an earlier Next.js seven-screen prototype and a Figma sync script. The approved target is now a React + Vite implementation with four core views.
 
-```text
-D:\DeskTOP\590proj_Ewardrobe
-```
+This document records the Figma/code integration boundary. It does not repeat the complete page organization, information architecture, or screen requirements.
 
-Current project contains only:
+## 2. Documentation Ownership
 
-```text
-UXDESIGN.md
-```
+To avoid maintaining the same UX specification in multiple places:
 
-There is no Next.js/React application yet.
+- `UXDESIGN.md` is the canonical and complete UX document. It owns information architecture, routes, navigation, view requirements, states, responsive behavior, and UX acceptance criteria.
+- `TECH_STACK.md` owns application architecture, Vite/Vercel deployment, IndexedDB, the background-removal API, and `react-rnd`.
+- `FIGMA_INTEGRATION_PLAN.md` owns only the current Figma baseline, design-to-code responsibility boundaries, synchronization constraints, and Figma migration steps.
+- `PROGRESS_2026-09-16.md` records historical work and the current migration status.
 
-### Local development environment
+When documents disagree, use `UXDESIGN.md` for product behavior and `TECH_STACK.md` for implementation decisions.
 
-Already installed:
+## 3. Revised Figma Scope
 
-```text
-Node.js v24.14.1 LTS
-npm 11.11.0
-Git 2.50.1
-```
+The active MVP prototype should represent the four views defined in `UXDESIGN.md`:
 
-No additional Node.js installation is required.
+- Closet
+- Item Detail, with add and edit variants
+- Outfit Builder
+- Saved Outfits
 
-## 2. Important Synchronization Constraint
+The previous Add New Item, Outfit Detail, and Me / Settings frames may remain in an Archive section for comparison, but they should not participate in the active prototype flow.
 
-Figma Code Connect does **not** automatically rewrite production React files whenever any visual layer changes. Code Connect maps published Figma components to existing code components and gives Figma Dev Mode or coding agents better implementation context.
+Required Figma adjustments:
 
-Figma also does not provide a safe native feature that translates every arbitrary canvas edit into working application logic in real time.
+- Merge Add New Item into Item Detail as a `mode=add` variant
+- Keep the existing-item state as a `mode=edit` variant
+- Use Cancel / Save in add mode
+- Use Delete / Save in edit mode
+- Remove Add to Outfit from Item Detail
+- Do not show Remove Background in edit mode
+- Reduce bottom navigation to Closet, Create, and Saved
+- Link Saved Outfit cards directly to the reopened state of Outfit Builder
+- Add a wider responsive reference in addition to the existing `402 × 874` mobile frames
 
-Examples that cannot be reliably inferred from an arbitrary Figma edit alone:
+Detailed content and state requirements remain in `UXDESIGN.md`.
 
-- Database behavior
-- API calls
-- Form validation
-- Upload logic
-- IndexedDB behavior
-- Drag-and-drop business rules
-- Error handling
-- Whether a visual element is decorative or interactive
+## 4. Source-of-Truth Boundary
 
-Therefore, this project will use a constrained and predictable synchronization model.
+Figma is authoritative for:
 
-## 3. Recommended Source-of-Truth Model
-
-### Figma is authoritative for
-
-- Screen structure
-- Component selection
-- Component labels
-- Navigation destinations
-- Colors, spacing, radius, and typography
-- Mobile layout order
-- Visible/hidden component variants
-
-### React code is authoritative for
-
-- Upload and remove.bg behavior
-- IndexedDB and Dexie storage
-- Form validation
-- Canvas drag, resize, rotate, and layer behavior
-- Runtime state and error handling
-- Accessibility behavior
-- PWA and browser behavior
-
-### Generated sync layer
-
-Supported Figma changes are converted into generated JSON rather than directly overwriting hand-written React files:
-
-```text
-Figma frames and component instances
-               ↓
-scripts/sync-figma.mjs
-               ↓
-src/generated/figma-layout.json
-               ↓
-React screen renderer and components
-               ↓
-localhost UI hot reload
-```
-
-This keeps generated design data separate from application logic.
-
-## 4. What Will Synchronize
-
-The sync bridge will support these properties:
-
-- Screen name and route
+- Visual structure and responsive layout intent
+- Component appearance and variants
 - Text labels
-- Component order
-- Component visibility
-- Auto-layout direction
-- Width, height, padding, and gap
-- Fill and stroke colors
-- Border radius
-- Font size and weight
-- Basic component variants
-- Navigation target stored through agreed node naming
+- Colors, spacing, radius, and typography
+- Prototype navigation
+- Add/edit visual variants for Item Detail
 
-The first version will not guarantee automatic conversion of:
+React code is authoritative for:
 
-- Arbitrary vectors or custom drawings
-- Complex masks and effects
-- New unknown component types
-- Complex prototype conditions
-- Animations
-- Application business logic
+- Route and form state
+- IndexedDB reads and writes
+- Image upload and background-removal requests
+- Validation and error handling
+- `react-rnd` drag, resize, and layer behavior
+- Saving and reopening outfits
+- Accessibility and runtime browser behavior
 
-Unknown nodes will produce a clear sync warning instead of silently generating broken UI.
+Figma changes must not directly overwrite application logic.
 
-## 5. Why Not Use Figma Webhooks for Local Live Sync
+## 5. Sync Constraints
 
-Figma provides a `FILE_UPDATE` webhook, but it fires after a period of editing inactivity and may take up to approximately 30 minutes. A public webhook also cannot directly call a private `localhost` address.
+Figma Code Connect or a custom sync script cannot safely translate arbitrary canvas edits into working application behavior.
 
-For local development, the practical workflow is:
+The sync layer may read constrained design data such as:
 
-```bash
-npm run figma:sync -- --watch
-```
+- Screen and component names
+- Text labels
+- Component order and visibility
+- Auto Layout direction, padding, and gap
+- Size, fill, stroke, radius, and typography
+- Explicit variants such as `mode=add` and `mode=edit`
 
-The watcher will poll the selected Figma frames at a conservative interval, compare the Figma version, and update generated JSON only when the version changes.
+It must not infer or generate:
 
-For CI or a deployed environment, a webhook can later trigger a GitHub Action or deployment job.
+- IndexedDB queries or migrations
+- API credentials or request behavior
+- Validation rules
+- Canvas persistence logic
+- Delete behavior
+- Application state based only on arbitrary layer names
 
-## 6. Figma File Structure
+Generated Figma data should remain separate from hand-written React components.
 
-Use one Figma page with three sections:
+## 6. Existing Sync Script
 
-```text
-Page1
-├── 00 Foundations
-│   ├── Color and spacing references
-│   └── Typography references
-├── 01 Components
-│   ├── App Header
-│   ├── Bottom Navigation
-│   ├── Search Field
-│   ├── Category Chip
-│   ├── Clothing Card
-│   ├── Outfit Card
-│   ├── Primary / Secondary / Danger Button
-│   └── Empty / Loading / Error State
-└── 02 Screens
-    ├── 01 Closet
-    ├── 02 Add New Item
-    ├── 03 Item Detail
-    ├── 04 Create Outfit
-    ├── 05 Saved Outfits
-    ├── 06 Outfit Detail
-    └── 07 Me Settings
-```
+If `scripts/sync-figma.mjs` remains part of the workflow, its screen allowlist should be updated during the code migration to match the four active views.
 
-All seven screens use the existing `402 × 874` mobile size.
+The script should:
 
-Repeated elements must be component instances, not duplicated one-off layers.
+- Read only explicitly named active frames
+- Preserve component and variant metadata needed by the implementation
+- Write to a generated JSON file rather than application source files
+- Report missing or unsupported nodes clearly
+- Never overwrite business logic
 
-## 7. Seven React Routes
+The Figma access token remains local and must not be committed.
 
-| Page | Route | Main purpose |
-| --- | --- | --- |
-| Closet | `/closet` | View, search, and filter clothing |
-| Add New Item | `/items/new` | Upload, remove background, categorize, save |
-| Item Detail | `/items/[id]` | View, edit, delete, add to outfit |
-| Create Outfit | `/create` | Matching Canvas and Category / Item Tray |
-| Saved Outfits | `/outfits` | Saved outfit gallery |
-| Outfit Detail | `/outfits/[id]` | Edit, delete, reopen in Matching Canvas |
-| Me / Settings | `/settings` | Basic app preferences and local data |
+## 7. Locofy Design-to-Code Workflow
 
-The root route `/` redirects to `/closet`.
+Locofy is the selected Figma-to-code tool for the revised MVP.
 
-## 8. Prototype Navigation in Figma
+Locofy is used to generate and review the visual React foundation:
 
-Required clickable prototype links:
+- React screen and component structure
+- Responsive layout and CSS
+- Reusable UI components and props
+- Images, icons, fonts, and other visual assets
+- Static interaction structure for buttons, inputs, and navigation
+
+Locofy is not responsible for:
+
+- IndexedDB / Dexie behavior
+- Background-removal API calls or Vercel Function code
+- Item Detail add/edit business rules
+- `react-rnd` drag, resize, layer, and persistence behavior
+- Data validation, deletion, saving, or reopening outfits
+
+Recommended workflow:
 
 ```text
-Closet → Add New Item
-Closet → Item Detail
-Closet → Create Outfit
-Closet → Saved Outfits
-Closet → Me / Settings
-
-Add New Item → Save Item → Closet
-Add New Item → Cancel → Closet
-
-Item Detail → Add to Outfit → Create Outfit
-Item Detail → Delete Item → Closet
-
-Create Outfit → Save Outfit → Outfit Detail
-
-Saved Outfits → Outfit Detail
-Saved Outfits → Create Outfit
-
-Outfit Detail → Edit Outfit → Create Outfit
-Outfit Detail → Delete Outfit → Saved Outfits
+Prepare Figma Auto Layout and components
+  → run Locofy in Figma Design Mode
+  → create an E-Closet React project
+  → convert one view with Locofy Lightning
+  → inspect responsive preview
+  → review structure in Locofy Builder
+  → export components or screens as a ZIP
+  → place output in a temporary folder
+  → review the code diff
+  → manually merge approved UI into the Vite project
+  → implement application logic by hand
 ```
 
-The Figma prototype demonstrates navigation and basic UI reactions. The localhost React app implements the same navigation and real state changes.
+Project-specific settings:
 
-## 9. React Technology Stack
+- Framework: React
+- Language: TypeScript when available in the code settings
+- Styling: CSS Modules or plain responsive CSS
+- UI library: none/custom, unless the project explicitly adopts one later
+- First pilot view: Closet
 
-### Required
+Recommended conversion order:
 
-```text
-Next.js 16
-React
-TypeScript
-Tailwind CSS
-Zustand
-Dexie + dexie-react-hooks
-React Konva + Konva
-Lucide React
-```
+1. Closet
+2. Item Detail add/edit variants
+3. Saved Outfits
+4. Outfit Builder static layout
 
-### Development and testing
+Outfit Builder should be exported only as a visual layout; its interactive canvas must be implemented with `react-rnd`.
 
-```text
-ESLint
-Playwright
-Vitest
-Testing Library
-```
+Generated output must not overwrite files that already contain application logic. Repeated exports should go to a temporary folder first and be merged only after reviewing the diff.
 
-### PWA, added after the seven-page prototype works
+The existing custom Figma sync script and Locofy serve different purposes: the sync script may continue to produce constrained design metadata, while Locofy generates reviewable UI code. Neither tool should rewrite business logic automatically.
 
-```text
-Web App Manifest
-Service Worker / Serwist
-Mobile icons
-Offline fallback page
-```
+## 8. Migration Sequence
 
-## 10. Required Figma Tools and Plugins
+1. Preserve the current frames and notes as a reference baseline
+2. Create an Archive section for removed screens
+3. Update Item Detail to share add and edit variants
+4. Update the three-item bottom navigation
+5. Connect Saved Outfit cards directly to Outfit Builder
+6. Add a wider responsive reference
+7. Review the four-view prototype against `UXDESIGN.md`
+8. Convert Closet with Locofy as a code-quality pilot
+9. Export the remaining approved views through Locofy
+10. Migrate the codebase according to `TECH_STACK.md`
+11. Update the Figma sync allowlist and generated metadata
+12. Verify implementation behavior separately from the visual prototype
 
-### Already available
+## 9. Acceptance Criteria
 
-- Figma MCP connection
-- Edit access to the target Figma file
-- Simple Design System library
-- Full seat on the Student plan
+- The existing Figma file identifiers and baseline are documented
+- `UXDESIGN.md` is the single complete UX and information-architecture source
+- This document does not duplicate full page specifications
+- The active prototype contains only the four revised views
+- Item Detail demonstrates add and edit variants in one shared design
+- Bottom navigation contains Closet, Create, and Saved
+- Saved Outfit cards reopen Outfit Builder directly
+- Removed frames are archived or clearly excluded from the active flow
+- Mobile and wider responsive intent is visible
+- Figma synchronization never claims to generate business logic automatically
+- Locofy output is reviewed in a temporary location before being merged
+- No Locofy export overwrites hand-written application logic
 
-### No additional Figma Community plugin is required
+## 10. Current Repository Status
 
-The seven screens can be created and inspected through the connected Figma MCP tools.
-
-### Code Connect limitation
-
-Official Code Connect publishing requires published components and an Organization or Enterprise plan. The current Student plan should not be treated as having this capability.
-
-Code Connect is optional for this MVP. If the account is upgraded later, mappings can be added for reusable components such as:
-
-- `Button`
-- `BottomNav`
-- `CategoryChip`
-- `ClothingCard`
-- `OutfitCard`
-- `SearchField`
-
-Code Connect improves component mapping but still does not provide automatic arbitrary Figma-to-code synchronization.
-
-## 11. Environment Variables
-
-The project will use `.env.local`:
-
-```env
-REMOVE_BG_API_KEY=
-FIGMA_FILE_KEY=7UmauOUmGRW7XMDdAkCosY
-FIGMA_PAGE_ID=0:1
-FIGMA_ACCESS_TOKEN=
-```
-
-Rules:
-
-- `.env.local` must be added to `.gitignore`
-- Never paste API keys or the Figma token into source files
-- Never expose these values through variables prefixed with `NEXT_PUBLIC_`
-- The user should create and enter the Figma token locally when the sync bridge is ready
-
-The Figma token only needs read access to the file content for local synchronization.
-
-## 12. Planned Project Structure
-
-```text
-590proj_Ewardrobe/
-├── app/
-│   ├── closet/page.tsx
-│   ├── create/page.tsx
-│   ├── items/new/page.tsx
-│   ├── items/[id]/page.tsx
-│   ├── outfits/page.tsx
-│   ├── outfits/[id]/page.tsx
-│   ├── settings/page.tsx
-│   ├── layout.tsx
-│   └── page.tsx
-├── components/
-│   ├── canvas/
-│   ├── clothing/
-│   ├── navigation/
-│   └── ui/
-├── db/
-│   ├── database.ts
-│   └── types.ts
-├── stores/
-│   └── outfit-store.ts
-├── src/generated/
-│   └── figma-layout.json
-├── scripts/
-│   ├── sync-figma.mjs
-│   └── validate-figma-schema.mjs
-├── public/
-├── .env.example
-├── .env.local
-├── TECH_STACK.md
-├── UXDESIGN.md
-└── FIGMA_INTEGRATION_PLAN.md
-```
-
-## 13. Implementation Phases
-
-### Phase 1 — Initialize localhost application
-
-- Create the Next.js project in the existing project folder
-- Configure TypeScript, Tailwind, ESLint, and mobile viewport
-- Create seven routes
-- Add shared bottom navigation
-- Use mock local data
-- Verify `npm run dev` at `http://localhost:3000`
-
-### Phase 2 — Create Figma component foundations
-
-- Inspect available Simple Design System components
-- Reuse existing components when suitable
-- Create only the project-specific reusable components that are missing
-- Use Auto Layout and consistent names
-- Keep the style low-fidelity, simple, and readable
-
-### Phase 3 — Build seven Figma screens
-
-- Build all seven `402 × 874` screens from `UXDESIGN.md`
-- Connect page navigation in Prototype mode
-- Validate every screen visually
-- Confirm labels and routes match the specification
-
-### Phase 4 — Implement seven interactive React pages
-
-- Match the Figma screens
-- Implement clickable navigation
-- Implement basic form and dialog reactions
-- Add empty, loading, error, and success states
-- Keep API and database behavior mocked until UI navigation is verified
-
-### Phase 5 — Add constrained Figma sync bridge
-
-- Define an allowed Figma component schema
-- Map Figma component IDs to React component names
-- Fetch the seven selected frame trees from the Figma REST API
-- Generate `src/generated/figma-layout.json`
-- Add schema validation
-- Add watch mode
-- Prevent generated files from overwriting application logic
-
-### Phase 6 — Add real MVP behavior
-
-- Dexie / IndexedDB
-- remove.bg Route Handler
-- React Konva Matching Canvas
-- Save and reopen outfits
-- PWA installation and offline read access
-
-## 14. Acceptance Criteria
-
-The first UI milestone is complete when:
-
-- All seven Figma screens exist at `402 × 874`
-- All required components from `UXDESIGN.md` are visible
-- The Figma prototype links work
-- The localhost app contains the same seven routes
-- Bottom navigation works
-- Add, edit, delete, save, and confirmation controls visibly react
-- The app works at a mobile viewport without horizontal overflow
-- `npm run build` succeeds
-- Playwright verifies the primary navigation flows
-- Supported Figma label/layout changes can update generated design JSON
-- Unsupported Figma nodes produce validation warnings
-
-The project must not claim that every arbitrary Figma edit can safely rewrite application logic.
-
-## 15. User Action Needed Later
-
-No action is required to begin the Figma and localhost UI work.
-
-Before enabling continuous local Figma polling, the user will need to:
-
-1. Create a Figma personal access token with file-content read access
-2. Put it in `FIGMA_ACCESS_TOKEN` inside `.env.local`
-3. Never send the token in chat or commit it to Git
-
+The repository code still reflects the earlier Next.js and seven-screen implementation. The Markdown files describe the approved target state; code, dependencies, routes, and the sync script must be updated in a separate implementation step.

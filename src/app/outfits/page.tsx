@@ -1,6 +1,6 @@
-import { AppShell } from "@/components/AppShell";
-import { SavedOutfitsScreen } from "@/components/Screens";
+import { FigmaPageStage } from "@/components/FigmaPageStage";
+import FigmaSavedOutfits from "@/components/FigmaSavedOutfits";
 
 export default function OutfitsPage() {
-  return <AppShell><SavedOutfitsScreen /></AppShell>;
+  return <FigmaPageStage><FigmaSavedOutfits /></FigmaPageStage>;
 }

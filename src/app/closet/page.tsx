@@ -1,5 +1,6 @@
-import { FigmaLive } from "@/components/FigmaLive";
+import FigmaCloset from "@/components/FigmaCloset";
+import { FigmaPageStage } from "@/components/FigmaPageStage";
 
 export default function ClosetPage() {
-  return <FigmaLive />;
+  return <FigmaPageStage><FigmaCloset /></FigmaPageStage>;
 }

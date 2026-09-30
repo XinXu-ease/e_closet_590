@@ -1,6 +1,6 @@
-import { AppShell } from "@/components/AppShell";
-import { AddItemScreen } from "@/components/Screens";
+import FigmaItemDetail from "@/components/FigmaItemDetail";
+import { FigmaPageStage } from "@/components/FigmaPageStage";
 
 export default function AddItemPage() {
-  return <AppShell showNavigation={false}><AddItemScreen /></AppShell>;
+  return <FigmaPageStage><FigmaItemDetail mode="add" /></FigmaPageStage>;
 }

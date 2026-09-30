@@ -1,525 +1,239 @@
-# E-Wardrobe Mobile UX Design
+# E-Closet MVP UX Design
 
-update time：2026-09-15
+更新时间：2026-09-26
 
 ## 1. Product Summary
 
-E-Wardrobe is a small mobile-first web app that lets one user upload a set of clothes and accessories as sticker-like cutouts, mix and match them on a canvas, save a satisfying outfit, and get help choosing an outfit for today.
+E-Closet is a single-user, responsive wardrobe website for organizing clothing and building outfits. The two-week MVP focuses on one complete local workflow: add or edit clothing, browse the closet, create an outfit, save it, and reopen it later.
 
-**Primary Users:** Me, or anyone who cares about outfits and wants to choose faster before going out.
+The MVP contains four core views:
 
-**Purpose:** Help users manage their wardrobe and arrange their outfits quickly without needing to try on repeatedly.
+1. Closet
+2. Item Detail
+3. Outfit Builder
+4. Saved Outfits
 
-**Meaningful Interactions:** Upload, categorize, drag, layer, filter, remove, and save locally.
+`Add New Item` is not a separate view. It is the add mode of Item Detail. `Outfit Detail` and `Me / Settings` are removed from the MVP because the core journey can be completed without them.
 
-## 2. MVP Workflow
+## 2. MVP User Journey
 
 ```text
-Upload clothing photos
-        ↓
-Remove background and create sticker-like cutouts
-        ↓
-Select a category and save the item
-        ↓
-Filter items by Tops / Bottoms / Shoes / Accessories / Outerwear / Others
-        ↓
-Drag items onto the Matching Canvas
-        ↓
-Resize / reposition / change layer / remove
-        ↓
-Save the outfit locally
-        ↓
-View, edit, delete, or reopen the saved outfit
+Closet
+  → open Item Detail in add mode
+  → choose an image and enter item information
+  → save the item locally
+  → browse or filter the Closet
+  → open Outfit Builder
+  → arrange clothing on the canvas
+  → save the outfit locally
+  → open Saved Outfits
+  → reopen the saved outfit in Outfit Builder
 ```
 
-All MVP data is stored in local state and IndexedDB instead of a cloud database.
+All wardrobe and outfit data is stored in the current browser through IndexedDB. No account or cloud sync is required.
 
 ## 3. Information Architecture
 
-The MVP contains **7 core pages**:
+| Core view | Suggested route | Purpose |
+| --- | --- | --- |
+| Closet | `/closet` | Browse, search, and filter clothing |
+| Item Detail — add mode | `/items/new` | Add a new clothing item using the shared Item Detail layout |
+| Item Detail — edit mode | `/items/:id` | View, edit, or delete an existing item |
+| Outfit Builder | `/create` | Create a new outfit or reopen an existing one |
+| Saved Outfits | `/outfits` | Browse saved outfits and reopen one in Outfit Builder |
 
-1. Closet
-2. Add New Item
-3. Item Detail
-4. Create Outfit / Matching Canvas
-5. Saved Outfits
-6. Outfit Detail
-7. Me / Settings
+The root route `/` should open or redirect to `/closet`.
 
-Upload progress, remove-background progress, filters, confirmations, and layer controls are page states, sheets, or dialogs—not separate pages.
+### Primary navigation
 
-### Primary Navigation
-
-A persistent bottom navigation appears on the four main sections:
+The persistent bottom navigation has three destinations:
 
 | Navigation item | Destination |
 | --- | --- |
 | Closet | Closet |
-| Create | Create Outfit / Matching Canvas |
+| Create | Outfit Builder |
 | Saved | Saved Outfits |
-| Me | Me / Settings |
 
-The default page when the app opens is **Closet**.
+Item Detail is reached from Closet and uses a back action instead of a bottom-navigation item.
 
-## 4. Page Specifications
+## 4. View Specifications
 
-### Page 1 — Closet
+### 4.1 Closet
 
-**Purpose:** Let the user view, search, filter, and manage all clothing items.
+**Purpose:** Let the user browse, search, filter, add, and open clothing items.
 
 **Must include:**
 
 - Page title: `Closet`
+- Plus button that opens Item Detail in add mode
 - Search field
-- Category filters:
-  - All Items
-  - Tops
-  - Bottoms
-  - Shoes
-  - Accessories
-  - Outerwear
-  - Others
-- Clothing item grid
-- Each item card contains:
-  - Sticker-like clothing cutout
-  - Item name or short label
-  - Category
-- Primary action: `Add New Item`
+- Category filters: All Items, Tops, Bottoms, Shoes, Accessories, Outerwear, and Others
+- Responsive clothing grid
+- Item cards containing image, name, and category
 - Bottom navigation
 
 **Main interactions:**
 
-- Tap a category to filter the item grid
-- Search for an item
-- Tap an item to open `Item Detail`
-- Tap `Add New Item` to open the upload flow
+- Tap the plus button to open `/items/new`
+- Tap an item to open `/items/:id`
+- Enter a search term to filter by item name
+- Select a category to filter the grid
 
 **Required states:**
 
-- Empty closet: explain that no clothing has been added and show `Add New Item`
-- Empty search/filter result: show `No matching items`
-- Normal item grid
+- Loading local data
+- Empty closet with an Add Item action
+- No matching search or filter results
+- Normal clothing grid
 
-**Navigation:**
+### 4.2 Item Detail — shared add/edit view
 
-```text
-Closet → Add New Item
-Closet → Item Detail
-Closet → Create Outfit     via bottom navigation
-Closet → Saved Outfits     via bottom navigation
-Closet → Me / Settings     via bottom navigation
-```
+Item Detail uses one shared layout and changes its content and actions according to the entry path.
 
----
+#### Shared layout
 
-### Page 2 — Add New Item
+- Back button to Closet
+- Large image container at the top
+- Item name field
+- Category field
+- Bottom action row
+- Clear validation, processing, success, and error feedback
 
-**Purpose:** Upload a clothing photo, remove its background, choose a category, and save it to the Closet.
+#### Add mode
+
+**Entry:** The user taps the plus button in Closet.
+
+**Behavior:**
+
+- The page opens with an empty image container, empty name, and default category
+- The image container is clickable and opens the browser image picker
+- After image selection, background removal starts automatically
+- The container shows the selected image, processing state, or cutout result
+- Name and Category keep the same form UI used in edit mode
+- Bottom actions are `Cancel` and `Save`
+- `Cancel` returns to Closet without creating an item
+- `Save` writes the item and processed image to IndexedDB, then returns to Closet
+
+**Validation states:**
+
+- Unsupported file type
+- File too large
+- Background removal in progress
+- Background removal failed with a retry action
+- Save disabled until image, name, and category are valid
+
+#### Edit mode
+
+**Entry:** The user taps an existing item in Closet.
+
+**Behavior:**
+
+- The page loads the item image, name, and category
+- The existing image appears in the top container
+- There is no `Remove Background` button
+- The user can edit name and category directly
+- Bottom actions are `Delete` and `Save`
+- `Delete` asks for confirmation, removes the item, and returns to Closet
+- `Save` updates the item in IndexedDB and returns to Closet
+
+Item Detail does not include `Add to Outfit`.
+
+### 4.3 Outfit Builder
+
+**Purpose:** Let the user create a new outfit or continue editing a saved outfit.
 
 **Must include:**
 
-- Page title: `Add New Item`
-- Back button to Closet
-- Upload area
-- Actions:
-  - Choose from Photos
-  - Take Photo, when supported
-- Original image preview
-- Remove background action
-- Background-removal result preview
-- Item name field
-- Category selection:
-  - Tops
-  - Bottoms
-  - Shoes
-  - Accessories
-  - Outerwear
-  - Others
-- Primary action: `Save Item`
-- Secondary action: `Cancel`
+- Page title: `Outfit Builder`
+- Responsive outfit canvas
+- Clothing tray populated from IndexedDB
+- Category filters for the tray
+- Draggable and resizable clothing elements implemented with `react-rnd`
+- Selected-item controls for layer order and removal
+- Reset action
+- `Save Outfit` action
+- Bottom navigation
 
 **Main interactions:**
 
-1. User uploads a clothing photo
-2. App sends it to remove.bg
-3. App turns it into a sticker-like cutout
-4. User reviews the result
-5. User enters a name and selects a category
-6. User saves the item locally
+- Tap a clothing item to add it to the canvas
+- Drag an item to reposition it
+- Resize an item with visible handles
+- Move an item forward or backward
+- Remove an item from the canvas
+- Save a new outfit with a name
+- Update an existing outfit after reopening it from Saved Outfits
 
 **Required states:**
 
-- Before upload
-- Image selected
-- Removing background / loading
-- Background removed successfully
-- Remove-background failure with `Try Again`
-- Invalid image type or file too large
-- Save disabled until required information is complete
+- Empty canvas with brief instructions
+- Canvas with items
+- Selected item with resize and layer controls
+- Empty Closet guidance when no clothing is available
+- Save-name dialog
+- Save error and success feedback
 
-**Navigation:**
+### 4.4 Saved Outfits
 
-```text
-Closet → Add New Item → Save Item → Closet
-Closet → Add New Item → Cancel → Closet
-```
-
-After saving, the new item should appear in the Closet immediately.
-
----
-
-### Page 3 — Item Detail
-
-**Purpose:** View one item and choose what to do with it.
-
-**Must include:**
-
-- Back button to Closet
-- Large sticker-like item preview
-- Item name
-- Category
-- Date added, optional for MVP
-- Primary action: `Add to Outfit`
-- Actions:
-  - Edit Item
-  - Delete Item
-
-**Edit Item must allow:**
-
-- Change item name
-- Change category
-- Replace the image, optional for the first MVP version
-- Save changes
-
-**Delete Item behavior:**
-
-- Show a confirmation dialog before deletion
-- Explain that the item will be removed from the Closet
-- After confirmation, return to Closet
-
-**Navigation:**
-
-```text
-Closet → Item Detail → Back → Closet
-Item Detail → Edit Item → Save → Item Detail
-Item Detail → Delete Item → Confirm → Closet
-Item Detail → Add to Outfit → Create Outfit
-```
-
-When entering Create Outfit through `Add to Outfit`, the selected item is already placed on the Matching Canvas.
-
----
-
-### Page 4 — Create Outfit / Matching Canvas
-
-**Purpose:** Let the user mix and match clothing items on an outfit board.
-
-**Must include:**
-
-- Page title: `Create Outfit`
-- Matching Canvas / Outfit Board
-- Category / Item Tray
-- Category filters:
-  - Tops
-  - Bottoms
-  - Shoes
-  - Accessories
-  - Outerwear
-  - Others
-- Sticker-like clothing thumbnails
-- Selected-item controls:
-  - Bring Forward
-  - Send Backward
-  - Remove
-- Primary action: `Save Outfit`
-- Clear or reset action
-- Bottom navigation, hidden or minimized while editing if more canvas space is needed
-
-**Canvas interactions:**
-
-- Tap or drag an item from the Item Tray onto the Matching Canvas
-- Drag to reposition an item
-- Resize an item
-- Rotate an item, optional for the first MVP version
-- Bring Forward
-- Send Backward
-- Remove from canvas
-
-**Optional MVP extension:**
-
-- Upload a personal photo
-- Place digital clothing on the personal photo
-
-This optional feature should not block completion of the standard outfit-board workflow.
-
-**Required states:**
-
-- Empty canvas with short guidance
-- Canvas with one or more items
-- Item selected with layer controls visible
-- Unsaved changes warning when leaving
-- Saving state
-- Save success confirmation
-
-**Save Outfit behavior:**
-
-- Ask for an outfit name
-- Generate a preview image
-- Save the canvas item positions, sizes, rotations, and layers locally
-- After saving, allow the user to remain on the canvas or open the saved outfit
-
-**Navigation:**
-
-```text
-Closet → Create Outfit                 via bottom navigation
-Item Detail → Add to Outfit → Create Outfit
-Create Outfit → Save Outfit → Outfit Detail
-Create Outfit → Saved Outfits          via bottom navigation
-```
-
-If the user tries to leave with unsaved changes:
-
-```text
-Keep Editing / Discard Changes / Save Outfit
-```
-
----
-
-### Page 5 — Saved Outfits
-
-**Purpose:** Show all locally saved outfits in a gallery.
+**Purpose:** Let the user browse saved outfits and reopen them for editing.
 
 **Must include:**
 
 - Page title: `Saved Outfits`
-- Outfit gallery
-- Each outfit card contains:
-  - Preview image
-  - Outfit name
-  - Last edited date, optional for MVP
-- Primary action: `Create Outfit`
+- Responsive outfit grid
+- Outfit preview, name, and item count
+- Create Outfit action
 - Bottom navigation
 
 **Main interactions:**
 
-- Tap an outfit to open `Outfit Detail`
-- Tap `Create Outfit` to open a new empty Matching Canvas
+- Tap an outfit card to reopen that outfit directly in Outfit Builder
+- Tap Create Outfit to open a blank Outfit Builder
+- Delete an outfit from the Saved Outfits view with confirmation if deletion is included
 
-**Required states:**
+There is no separate Outfit Detail view in the MVP.
 
-- Empty gallery with `Create Outfit`
-- Saved outfit gallery
+## 5. Responsive Behavior
 
-**Navigation:**
+The interface is mobile-first but must work as a responsive website rather than a fixed phone mockup.
 
-```text
-Saved Outfits → Outfit Detail
-Saved Outfits → Create Outfit
-Saved Outfits → Closet / Me            via bottom navigation
-```
+- Start from a compact mobile layout around 390 px wide
+- Keep touch targets at least 44 × 44 px where practical
+- Use one-column forms on mobile
+- Allow clothing and outfit grids to gain columns on wider screens
+- Keep the builder usable on touch and pointer devices
+- Keep primary actions visible without covering editable content
+- Respect safe-area insets for mobile bottom navigation
+- Avoid interactions that depend only on hover
 
----
+## 6. Local Data and Feedback
 
-### Page 6 — Outfit Detail
+- Clothing items and outfits persist in IndexedDB
+- Refreshing the page must not erase saved data
+- The UI must distinguish loading, empty, processing, success, and error states
+- Removing an item that appears in saved outfits must not leave broken canvas elements
+- If background removal requires a network connection, the UI must explain network failures clearly
 
-**Purpose:** View, edit, delete, or reopen a saved outfit.
+## 7. Deferred Beyond the Two-Week MVP
 
-**Must include:**
+- Accounts and authentication
+- Cloud database or cross-device sync
+- PWA installation and offline asset caching
+- Personal-photo virtual try-on
+- Outfit Detail page
+- Me / Settings page
+- Social sharing, collaboration, and recommendations
+- Native iOS or Android apps
 
-- Back button to Saved Outfits
-- Large outfit preview
-- Outfit name
-- Primary action: `Edit Outfit`
-- Actions:
-  - Reopen in Matching Canvas
-  - Delete Outfit
+## 8. UX Acceptance Criteria
 
-`Edit Outfit` and `Reopen in Matching Canvas` can use the same behavior in the MVP.
-
-**Delete Outfit behavior:**
-
-- Show a confirmation dialog
-- Delete the locally saved outfit only after confirmation
-- Return to Saved Outfits
-
-**Navigation:**
-
-```text
-Saved Outfits → Outfit Detail → Back → Saved Outfits
-Outfit Detail → Edit Outfit → Create Outfit with saved canvas data
-Outfit Detail → Delete Outfit → Confirm → Saved Outfits
-```
-
-When an existing outfit is saved again, update the same outfit instead of creating a duplicate unless the user chooses `Save as New` in a future version.
-
----
-
-### Page 7 — Me / Settings
-
-**Purpose:** Provide basic app preferences and local-data controls.
-
-**Must include:**
-
-- Page title: `Me` or `Settings`
-- Basic app preferences
-- Local storage information
-- About this app
-- Bottom navigation
-
-**Recommended MVP settings:**
-
-- Light / dark / system theme
-- Confirm before deleting items and outfits
-- Storage usage summary
-- Export local data, optional
-- Import local data, optional
-- Clear all local data
-
-**Clear all local data behavior:**
-
-- Clearly explain that clothes and saved outfits will be removed from this device
-- Require confirmation
-- Return to an empty Closet after completion
-
-**Navigation:**
-
-```text
-Me / Settings → Closet / Create / Saved via bottom navigation
-```
-
-## 5. Complete Navigation Flow
-
-```mermaid
-flowchart TD
-    A[Open App] --> B[Closet]
-
-    B --> C[Add New Item]
-    C --> C1[Upload Clothing Photo]
-    C1 --> C2[Remove Background]
-    C2 --> C3[Select Category]
-    C3 --> C4[Save Item]
-    C4 --> B
-
-    B --> D[Item Detail]
-    D --> D1[Edit Item]
-    D1 --> D
-    D -->|Delete Item| B
-    D -->|Add to Outfit| E[Create Outfit / Matching Canvas]
-
-    B -->|Bottom Nav| E
-    E --> E1[Drag / Resize / Reposition]
-    E1 --> E2[Layer Controls]
-    E2 --> E3[Save Outfit]
-    E3 --> G[Outfit Detail]
-
-    B -->|Bottom Nav| F[Saved Outfits]
-    F --> G
-    G -->|Edit or Reopen| E
-    G -->|Delete Outfit| F
-
-    B -->|Bottom Nav| H[Me / Settings]
-    E -->|Bottom Nav| F
-    F -->|Bottom Nav| B
-    H -->|Bottom Nav| B
-```
-
-## 6. Core User Flows
-
-### Flow A — Add the first clothing item
-
-```text
-Empty Closet
-→ Add New Item
-→ Upload clothing photo
-→ Remove background
-→ Review sticker-like cutout
-→ Select category
-→ Save Item
-→ Closet
-```
-
-### Flow B — Create and save an outfit
-
-```text
-Closet
-→ Create
-→ Filter by category
-→ Add clothing items to Matching Canvas
-→ Drag / resize / reposition
-→ Bring Forward / Send Backward / Remove
-→ Save Outfit
-→ Outfit Detail
-```
-
-### Flow C — Start an outfit from one item
-
-```text
-Closet
-→ Item Detail
-→ Add to Outfit
-→ Matching Canvas with selected item already added
-→ Add more items
-→ Save Outfit
-```
-
-### Flow D — Edit a saved outfit
-
-```text
-Saved Outfits
-→ Outfit Detail
-→ Edit Outfit / Reopen in Matching Canvas
-→ Change position, size, layer, or items
-→ Save changes
-→ Outfit Detail
-```
-
-## 7. Global UX Requirements
-
-- Design mobile-first and support one-handed use where possible
-- Use the same category names throughout the app
-- Always show progress while removing a background or saving an outfit
-- Never lose unsaved canvas changes without warning
-- Ask for confirmation before deleting an item, outfit, or all local data
-- Use clear empty states that include the next action
-- Keep the main actions visually consistent:
-  - `Add New Item`
-  - `Add to Outfit`
-  - `Save Item`
-  - `Save Outfit`
-  - `Edit Outfit`
-- Keep all data local for the MVP
-- The visual direction is a **Digital fashion scrapbook / personal wardrobe journal**
-
-## 8. MVP Priority
-
-### Must Have
-
-- Closet and categories
-- Add New Item
-- Upload clothing photo
-- Remove background
-- Save item locally
-- Item Detail
-- Matching Canvas
-- Drag, resize, reposition, layer, and remove
-- Save Outfit
-- Saved Outfits gallery
-- Outfit Detail
-- Edit and delete saved outfits
-
-### Nice to Have
-
-- Personal photo on the Matching Canvas
-- Rotation gesture
-- Export and import local data
-- Storage usage summary
-- Dark mode
-
-### Future Version
-
-- User accounts
-- Cloud synchronization
-- Outfit suggestions for today
-- Weather-based recommendations
-- Automatic clothing recognition and categorization
-
+- The product exposes only the four core views defined above
+- Add and edit use the same Item Detail layout with the correct conditional actions
+- Add mode has `Cancel` and `Save`; edit mode has `Delete` and `Save`
+- Edit mode has no Remove Background button
+- Item Detail has no Add to Outfit action
+- A newly saved item appears in Closet immediately
+- A saved outfit appears in Saved Outfits immediately
+- Tapping a saved outfit reopens it in Outfit Builder with its arrangement preserved
+- The complete journey works at mobile and desktop widths
+- No removed or deferred view is required to finish the core journey

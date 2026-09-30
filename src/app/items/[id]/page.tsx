@@ -1,6 +1,6 @@
-import { AppShell } from "@/components/AppShell";
-import { ItemDetailScreen } from "@/components/Screens";
+import FigmaItemDetail from "@/components/FigmaItemDetail";
+import { FigmaPageStage } from "@/components/FigmaPageStage";
 
 export default function ItemDetailPage() {
-  return <AppShell showNavigation={false}><ItemDetailScreen /></AppShell>;
+  return <FigmaPageStage><FigmaItemDetail mode="edit" /></FigmaPageStage>;
 }
