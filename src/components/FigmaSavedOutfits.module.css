@@ -1,4 +1,5 @@
 .card {
+  composes: frame from "./CollageCardFrame.module.css";
   display: inline-flex;
   flex-direction: column;
   align-self: stretch;
@@ -8,21 +9,18 @@
   height: 254px;
   padding: 12px;
   gap: 12px;
-  background: var(--Color-Surface, #fffefb);
-  border-radius: 14px;
-  outline: 1px solid var(--Color-Line, #c2b8ab);
-  outline-offset: -1px;
 }
 
 .preview {
   position: relative;
+  z-index: 1;
   display: grid;
   overflow: hidden;
-  flex: 1 1 0;
+  height: 197px;
+  flex: 0 0 197px;
   align-self: stretch;
   place-items: center;
-  background: var(--Color-Blue, #c7d9eb);
-  border-radius: 11px;
+  background: #fff;
 }
 
 .composition {
@@ -33,25 +31,32 @@
 
 .piece { position: absolute; object-fit: contain; }
 
-.screen { position: relative; width: min(402px, 100vw); height: 874px; overflow: hidden; background: #f7f2ec; border-radius: 32px; }
-.header { position: absolute; top: 23px; right: 24px; left: 24px; padding: 5px 4px; }
-.brand { color: #756e63; font-size: 11px; font-weight: 600; }
-.title { margin-top: 5px; color: #29241f; font-size: 30px; font-weight: 700; line-height: 1; }
-.subtitle { margin-top: 7px; color: #756e63; font-size: 13px; }
-.search { position: absolute; top: 118px; right: 21px; left: 21px; display: flex; height: 42px; align-items: center; gap: 12px; padding: 0 16px; background: #fffefb; border: 1px solid #c2b8ab; border-radius: 16px; }
-.searchIcon { color: #756e63; font-size: 20px; }
-.search input { min-width: 0; flex: 1; padding: 0; background: transparent; border: 0; outline: 0; font-size: 14px; }
+.openBadge { position: absolute; right: 7px; bottom: 7px; z-index: 2; display: grid; width: 60px; height: 21px; place-items: center; color: #29241f; background: #ffe500; box-shadow: 1px 1px 0 #5b5200; font-family: "Old Standard TT", Georgia, serif; font-size: 11px; font-weight: 700; line-height: 1; }
+
+.screen { position: relative; width: min(402px, 100vw); height: 874px; overflow: hidden; background-color: #fff; background-image: linear-gradient(#a9c6f2, #a9c6f2), linear-gradient(90deg, #a9c6f2, #a9c6f2), url("/figma/background.png"); background-repeat: no-repeat, no-repeat, no-repeat; background-position: 0 97px, 318px 0, center; background-size: 100% 1px, 1px calc(100% - 75px), cover; border: 2px solid #29241f; border-radius: 32px; }
+.screen::before { position: absolute; inset: 0; z-index: 0; background: url("/figma/saved-outfits-page-grid.png") center / cover; content: ""; opacity: .2; pointer-events: none; }
+.search { position: absolute; top: 118px; right: 23px; left: 23px; z-index: 1; display: flex; height: 37px; align-items: center; gap: 12px; padding: 0 12px; background: #fff; border: 0; }
+.search::before { position: absolute; inset: 0; z-index: 0; background: url("/figma/search-brush-border.png") center / 100% 100% no-repeat; content: ""; pointer-events: none; }
+.searchIcon { position: relative; top: -1px; left: 1px; z-index: 1; color: #756e63; font-family: "Old Standard TT", Georgia, serif; font-size: 21px; line-height: 1; }
+.search input { position: relative; z-index: 1; min-width: 0; flex: 1; padding: 0; color: #756e63; background: transparent; border: 0; outline: 0; font-family: "Old Standard TT", Georgia, serif; font-size: 14px; }
 .search input::placeholder { color: #756e63; }
-.content { position: absolute; top: 176px; right: 19px; bottom: 72px; left: 20px; padding-bottom: 20px; overflow-y: auto; scrollbar-width: none; }
+.search input::-webkit-search-cancel-button { width: 10px; height: 10px; margin-left: 6px; cursor: pointer; -webkit-appearance: none; appearance: none; background: linear-gradient(45deg, transparent 46%, #29241f 47%, #29241f 53%, transparent 54%), linear-gradient(-45deg, transparent 46%, #29241f 47%, #29241f 53%, transparent 54%); }
+.content { position: absolute; top: 176px; right: 20px; bottom: 75px; left: 20px; z-index: 1; padding-bottom: 20px; overflow-y: auto; scrollbar-width: none; }
 .content::-webkit-scrollbar { display: none; }
-.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 20px; }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; column-gap: 15px; row-gap: 20px; }
 .state { grid-column: 1 / -1; padding: 48px 20px; color: #756e63; font-size: 13px; line-height: 1.5; text-align: center; }
 .state a { text-decoration: underline; }
 
 .name {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 21px;
   color: var(--Color-Ink, #29241f);
-  font-family: Inter, Arial, Helvetica, sans-serif;
-  font-size: 13px;
-  font-weight: 600;
+  font-family: "Old Standard TT", Georgia, serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 21px;
+  text-align: center;
   overflow-wrap: break-word;
 }

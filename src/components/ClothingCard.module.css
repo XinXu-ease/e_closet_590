@@ -1,12 +1,10 @@
 .card {
+  composes: frame from "./CollageCardFrame.module.css";
   display: flex;
   min-width: 0;
   flex-direction: column;
   gap: 7px;
   padding: 8px;
-  background: #fffefb;
-  border: 1px solid #c2b8ab;
-  border-radius: 14px;
   text-align: left;
 }
 

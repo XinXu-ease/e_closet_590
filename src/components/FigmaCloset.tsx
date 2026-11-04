@@ -5,8 +5,9 @@ import { useMemo, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { BottomNavigation } from "./BottomNavigation";
 import { ClothingCard } from "./ClothingCard";
-import { db } from "@/lib/db";
+import { CollagePageHeader } from "./CollagePageHeader";
 import { useHorizontalDragScroll } from "@/hooks/useHorizontalDragScroll";
+import { db } from "@/lib/db";
 import { CLOTHING_CATEGORIES, type ClothingCategory } from "@/lib/types";
 import styles from "./FigmaCloset.module.css";
 
@@ -38,11 +39,7 @@ export default function FigmaCloset() {
   const hasFilters = search.trim().length > 0 || category !== "All";
 
   return <div data-layer="AUTO / Closet" className={styles.screen}>
-    <header className={styles.header}>
-      <div className={styles.brand}>E-CLOSET</div>
-      <div className={styles.title}>Closet</div>
-      <div className={styles.subtitle}>Everything you own, ready to style.</div>
-    </header>
+    <CollagePageHeader title="Closet" description="Everything you own, ready to style." />
 
     <label className={styles.search}>
       <span className={styles.searchIcon} aria-hidden="true">⌕</span>
@@ -50,7 +47,7 @@ export default function FigmaCloset() {
     </label>
 
     <div className={styles.filters} aria-label="Filter by category" {...filterDrag}>
-      {(["All", ...CLOTHING_CATEGORIES] as Filter[]).map((filter) => <button key={filter} type="button" className={`${styles.filter} ${category === filter ? styles.filterActive : ""}`} aria-pressed={category === filter} onClick={() => setCategory(filter)}>{filter}</button>)}
+      {(["All", ...CLOTHING_CATEGORIES] as Filter[]).map((filter) => <button key={filter} type="button" className={`${styles.filter} ${category === filter ? styles.filterActive : ""}`} aria-pressed={category === filter} onPointerDown={() => setCategory(filter)} onPointerUp={() => setCategory(filter)} onClick={() => setCategory(filter)}>{filter}</button>)}
     </div>
 
     <section className={styles.content} aria-live="polite">
@@ -64,7 +61,6 @@ export default function FigmaCloset() {
         <div className={styles.column}>
           {filteredItems.filter((_, index) => index % 2 === 0).map((item) => <ClothingCard key={item.id} item={item} />)}
         </div>
-        {isLoading ? <p className={styles.state}>Loading your closet…</p> : null}
         {databaseError ? <p className={`${styles.state} ${styles.error}`}>{databaseError}</p> : null}
         {!isLoading && !databaseError && filteredItems.length === 0 && hasFilters ? <p className={styles.state}>No items match this search and category.</p> : null}
       </div>

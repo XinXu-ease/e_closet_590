@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { BottomNavigation } from "./BottomNavigation";
+import { CollagePageHeader } from "./CollagePageHeader";
 import { useObjectUrl } from "@/hooks/useObjectUrl";
 import { db } from "@/lib/db";
 import { getDisplayImage, type ClothingItem, type OutfitPiece } from "@/lib/types";
@@ -38,11 +39,7 @@ export default function FigmaSavedOutfits() {
   }, [outfits, search]);
 
   return <div data-layer="AUTO / Saved Outfits" className={styles.screen}>
-    <header className={styles.header}>
-      <div className={styles.brand}>E-CLOSET</div>
-      <div className={styles.title}>Saved Outfits</div>
-      <div className={styles.subtitle}>Tap a card to reopen it in Outfit Builder.</div>
-    </header>
+    <CollagePageHeader title="Saved Outfits" description="Tap a card to reopen it in Outfit Builder." addHref="/outfits/new" addLabel="Add outfit" />
 
     <label className={styles.search}>
       <span className={styles.searchIcon} aria-hidden="true">⌕</span>
@@ -51,18 +48,18 @@ export default function FigmaSavedOutfits() {
 
     <section className={styles.content}>
       <div data-layer="Frame 12" className={styles.grid}>
-        {outfits === undefined || items === undefined ? <p className={styles.state}>Loading saved outfits…</p> : null}
         {databaseError ? <p className={styles.state}>{databaseError}</p> : null}
         {outfits?.length === 0 ? <p className={styles.state}>No saved outfits yet. <Link href="/outfits/new">Create your first outfit.</Link></p> : null}
         {outfits && outfits.length > 0 && filteredOutfits.length === 0 ? <p className={styles.state}>No outfits match this search.</p> : null}
         {filteredOutfits.map((outfit) => <Link key={outfit.id} href={`/outfits/${outfit.id}`} aria-label={`Open ${outfit.name}`} className={styles.card}>
+          <div className={styles.name}>{outfit.name}</div>
           <div className={styles.preview}>
             <div className={styles.composition}>{outfit.pieces.map((piece) => {
               const item = itemMap.get(piece.clothingId);
               return item ? <PreviewPiece key={piece.instanceId} piece={piece} item={item} /> : null;
             })}</div>
+            <span className={styles.openBadge}>Open →</span>
           </div>
-          <div className={styles.name}>{outfit.name}</div>
         </Link>)}
       </div>
     </section>

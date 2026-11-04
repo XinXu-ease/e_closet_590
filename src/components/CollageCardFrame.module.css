@@ -1,0 +1,19 @@
+.frame {
+  position: relative;
+  overflow: hidden;
+  background: #f5f5f5;
+  border: 0;
+}
+
+.frame::before {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: url("/figma/saved-outfits-card-brush-border.png") center / 100% 100% no-repeat;
+  content: "";
+}
+
+.frame > * {
+  position: relative;
+  z-index: 1;
+}

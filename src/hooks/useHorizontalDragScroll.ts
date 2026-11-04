@@ -1,51 +1,53 @@
 "use client";
 
-import { useRef, type MouseEvent as ReactMouseEvent } from "react";
+import { useRef, type PointerEvent as ReactPointerEvent } from "react";
 
 export function useHorizontalDragScroll<T extends HTMLElement>() {
   const drag = useRef({
     active: false,
     dragged: false,
+    pointerId: -1,
     startX: 0,
     startScrollLeft: 0,
   });
 
   const finishDrag = (element: T) => {
     drag.current.active = false;
+    drag.current.pointerId = -1;
     element.removeAttribute("data-dragging");
-    window.setTimeout(() => {
-      drag.current.dragged = false;
-    }, 0);
   };
 
   return {
-    onMouseDown(event: ReactMouseEvent<T>) {
-      if (event.button !== 0) return;
+    onPointerDown(event: ReactPointerEvent<T>) {
+      if (event.button !== 0 && event.pointerType !== "touch") return;
       drag.current.active = true;
       drag.current.dragged = false;
+      drag.current.pointerId = event.pointerId;
       drag.current.startX = event.clientX;
       drag.current.startScrollLeft = event.currentTarget.scrollLeft;
       event.currentTarget.setAttribute("data-dragging", "true");
+      event.currentTarget.setPointerCapture(event.pointerId);
     },
-    onMouseMove(event: ReactMouseEvent<T>) {
-      if (!drag.current.active) return;
+    onPointerMove(event: ReactPointerEvent<T>) {
+      if (!drag.current.active || drag.current.pointerId !== event.pointerId) return;
       const distance = event.clientX - drag.current.startX;
-      if (Math.abs(distance) > 4) drag.current.dragged = true;
+      if (Math.abs(distance) > 6) drag.current.dragged = true;
       if (drag.current.dragged) {
         event.preventDefault();
         event.currentTarget.scrollLeft = drag.current.startScrollLeft - distance;
       }
     },
-    onMouseUp(event: ReactMouseEvent<T>) {
+    onPointerUp(event: ReactPointerEvent<T>) {
+      if (drag.current.pointerId !== event.pointerId) return;
       finishDrag(event.currentTarget);
+      if (drag.current.dragged) {
+        window.setTimeout(() => { drag.current.dragged = false; }, 150);
+      }
     },
-    onMouseLeave(event: ReactMouseEvent<T>) {
-      if (drag.current.active) finishDrag(event.currentTarget);
-    },
-    onClickCapture(event: ReactMouseEvent<T>) {
-      if (!drag.current.dragged) return;
-      event.preventDefault();
-      event.stopPropagation();
+    onPointerCancel(event: ReactPointerEvent<T>) {
+      if (drag.current.pointerId !== event.pointerId) return;
+      drag.current.dragged = false;
+      finishDrag(event.currentTarget);
     },
   };
 }

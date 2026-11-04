@@ -10,16 +10,17 @@ html,
 body {
   min-height: 100%;
   margin: 0;
-  background: #cbc8c0;
+  background: #fff;
   color: var(--ink);
-  font-family: Inter, Arial, Helvetica, sans-serif;
+  font-family: "Old Standard TT", Georgia, serif;
 }
 
 button,
 input,
-select {
+select,
+textarea {
   color: inherit;
-  font: inherit;
+  font-family: "Old Standard TT", Georgia, serif;
 }
 
 button,
@@ -44,9 +45,8 @@ button {
   overflow: auto;
 }
 
-.figma-page-stage [data-layer] {
-  font-family: Inter, Arial, Helvetica, sans-serif !important;
-}
+/* Individual Figma-derived components choose their own typeface.  The body
+   still supplies Inter as the default, without overriding those choices. */
 
 @media (max-width: 440px) {
   .figma-page-stage {

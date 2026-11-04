@@ -2,13 +2,13 @@
 /* eslint-disable @next/next/no-img-element -- IndexedDB Blob URLs are local and cannot use the Next image optimizer. */
 
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { useObjectUrl } from "@/hooks/useObjectUrl";
 import { db, deleteClothingItemCascade } from "@/lib/db";
 import {
   CLOTHING_CATEGORIES,
-  COLOR_TAGS,
   getDisplayImage,
   type ClothingCategory,
   type ColorTagId,
@@ -20,6 +20,15 @@ type FigmaItemDetailProps = { mode: "add" | "edit"; itemId?: string };
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_PROCESSING_EDGE = 2000;
+
+const TAPE_OPTIONS: Array<{ id: ColorTagId; image: string; label: string }> = [
+  { id: "lime", image: "/figma/tape-yellow.png", label: "Yellow tape" },
+  { id: "red", image: "/figma/tape-red.png", label: "Red tape" },
+  { id: "blue", image: "/figma/tape-blue.png", label: "Blue tape" },
+  { id: "purple", image: "/figma/tape-purple.png", label: "Purple tape" },
+  { id: "sand", image: "/figma/tape-orange.png", label: "Orange tape" },
+  { id: "green", image: "/figma/tape-green.png", label: "Green tape" },
+];
 
 async function prepareImageForRemoval(file: File) {
   const bitmap = await createImageBitmap(file);
@@ -227,14 +236,14 @@ export default function FigmaItemDetail({ mode, itemId }: FigmaItemDetailProps) 
     {isBlocked ? <div className={styles.notFound}>{loadError || "This clothing item no longer exists."}<br /><button type="button" onClick={() => router.push("/closet")}>Return to Closet</button></div> : null}
 
     {!isBlocked ? <form className={styles.form} onSubmit={(event) => { event.preventDefault(); void save(); }}>
-      <button type="button" data-layer={imageUrl ? "Image / Existing item" : "Image picker / Empty"} className={`${styles.imageButton} ${imageUrl ? styles.hasImage : ""}`} onClick={() => fileInputRef.current?.click()} disabled={saving}>
+      <label htmlFor="item-image-input" data-layer={imageUrl ? "Image / Existing item" : "Image picker / Empty"} className={`${styles.imageButton} ${imageUrl ? styles.hasImage : ""}`} aria-disabled={saving}>
         {imageUrl ? <img src={imageUrl} alt="Selected clothing" /> : <>
-          <span className={styles.uploadIcon} aria-hidden="true">＋</span>
+          <span className={styles.uploadIcon} aria-hidden="true">+</span>
           <span className={styles.uploadPrompt}>Tap to choose a photo</span>
-          <span className={styles.uploadHelper}>JPEG, PNG or WebP · max 10 MB</span>
+          <span className={styles.uploadHelper}>Background removal runs automatically</span>
         </>}
-      </button>
-      <input ref={fileInputRef} className={styles.hiddenInput} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleImage} />
+      </label>
+      <input id="item-image-input" ref={fileInputRef} className={styles.hiddenInput} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleImage} disabled={saving} />
 
       <div data-layer="Frame 6" className={styles.fields}>
         <label data-layer="Frame 7" className={styles.field}>Name
@@ -247,11 +256,11 @@ export default function FigmaItemDetail({ mode, itemId }: FigmaItemDetailProps) 
           </select>
         </label>
         <fieldset data-layer="Frame 9" className={styles.field} style={{ border: 0, padding: 0, margin: 0 }}>
-          <legend>Tag</legend>
+          <legend>Tape</legend>
           <div data-layer="Frame 10" className={styles.tags}>
-            {(Object.entries(COLOR_TAGS) as [ColorTagId, string][]).map(([id, color]) => <label key={id} className={styles.tagLabel} aria-label={id}>
+            {TAPE_OPTIONS.map(({ id, image, label }) => <label key={id} className={styles.tagLabel} aria-label={label}>
               <input className={styles.tagInput} type="radio" name="color-tag" value={id} checked={colorTag === id} onChange={() => setColorTag(id)} disabled={saving} />
-              <span className={styles.tagCircle} style={{ backgroundColor: color }} />
+              <span className={styles.tapeImage}><img src={image} alt="" /></span>
             </label>)}
           </div>
         </fieldset>
@@ -268,7 +277,7 @@ export default function FigmaItemDetail({ mode, itemId }: FigmaItemDetailProps) 
     </div> : null}
 
     <header data-layer="Frame 5" className={styles.topBar}>
-      <button type="button" aria-label="Back to Closet" className={styles.back} onClick={() => router.push("/closet")}>←</button>
+      <Link href="/closet" aria-label="Back to Closet" className={styles.back}><img src="/figma/arrow.png" alt="" /></Link>
       <div data-layer="Title" className={styles.title}>Item Detail</div>
       <div data-layer="Mode" className={styles.mode}>{mode === "edit" ? "EDIT" : "ADD"}</div>
     </header>
