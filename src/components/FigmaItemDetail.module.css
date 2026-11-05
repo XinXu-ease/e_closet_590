@@ -3,7 +3,10 @@
   width: min(402px, 100vw);
   height: 874px;
   overflow: hidden;
-  background: #fff url("/figma/background.png") center / cover;
+  background-color: #fff;
+  background-image: linear-gradient(rgb(255 255 255 / 80%), rgb(255 255 255 / 80%)), url("/figma/background.png");
+  background-position: center, center;
+  background-size: cover, cover;
   border: 2px solid #29241f;
   border-radius: 32px;
 }

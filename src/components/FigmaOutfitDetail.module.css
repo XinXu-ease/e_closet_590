@@ -1,4 +1,4 @@
-.screen { position: relative; width: min(402px, 100vw); height: 874px; overflow: hidden; background: #fff url("/figma/background.png") center / cover; border: 2px solid #29241f; border-radius: 32px; }
+.screen { position: relative; width: min(402px, 100vw); height: 874px; overflow: hidden; background-color: #fff; background-image: linear-gradient(rgb(255 255 255 / 80%), rgb(255 255 255 / 80%)), url("/figma/background.png"); background-position: center, center; background-size: cover, cover; border: 2px solid #29241f; border-radius: 32px; }
 .header { position: absolute; top: 20px; right: 24px; left: 24px; padding: 5px 4px; }
 .brand { color: #756e63; font-family: "Old Standard TT", Georgia, serif; font-size: 11px; font-weight: 600; }
 .title { margin-top: 5px; color: #29241f; font-family: "Old Standard TT", Georgia, serif; font-size: 30px; font-weight: 700; line-height: 1; }

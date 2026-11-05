@@ -236,14 +236,14 @@ export default function FigmaItemDetail({ mode, itemId }: FigmaItemDetailProps) 
     {isBlocked ? <div className={styles.notFound}>{loadError || "This clothing item no longer exists."}<br /><button type="button" onClick={() => router.push("/closet")}>Return to Closet</button></div> : null}
 
     {!isBlocked ? <form className={styles.form} onSubmit={(event) => { event.preventDefault(); void save(); }}>
-      <label htmlFor="item-image-input" data-layer={imageUrl ? "Image / Existing item" : "Image picker / Empty"} className={`${styles.imageButton} ${imageUrl ? styles.hasImage : ""}`} aria-disabled={saving}>
+      <button type="button" data-layer={imageUrl ? "Image / Existing item" : "Image picker / Empty"} className={`${styles.imageButton} ${imageUrl ? styles.hasImage : ""}`} onClick={() => fileInputRef.current?.click()} disabled={saving}>
         {imageUrl ? <img src={imageUrl} alt="Selected clothing" /> : <>
           <span className={styles.uploadIcon} aria-hidden="true">+</span>
           <span className={styles.uploadPrompt}>Tap to choose a photo</span>
           <span className={styles.uploadHelper}>Background removal runs automatically</span>
         </>}
-      </label>
-      <input id="item-image-input" ref={fileInputRef} className={styles.hiddenInput} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleImage} disabled={saving} />
+      </button>
+      <input ref={fileInputRef} className={styles.hiddenInput} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleImage} />
 
       <div data-layer="Frame 6" className={styles.fields}>
         <label data-layer="Frame 7" className={styles.field}>Name

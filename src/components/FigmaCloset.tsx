@@ -47,7 +47,7 @@ export default function FigmaCloset() {
     </label>
 
     <div className={styles.filters} aria-label="Filter by category" {...filterDrag}>
-      {(["All", ...CLOTHING_CATEGORIES] as Filter[]).map((filter) => <button key={filter} type="button" className={`${styles.filter} ${category === filter ? styles.filterActive : ""}`} aria-pressed={category === filter} onPointerDown={() => setCategory(filter)} onPointerUp={() => setCategory(filter)} onClick={() => setCategory(filter)}>{filter}</button>)}
+      {(["All", ...CLOTHING_CATEGORIES] as Filter[]).map((filter) => <button key={filter} type="button" className={`${styles.filter} ${category === filter ? styles.filterActive : ""}`} aria-pressed={category === filter} onClick={() => setCategory(filter)}>{filter}</button>)}
     </div>
 
     <section className={styles.content} aria-live="polite">
