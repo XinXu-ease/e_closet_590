@@ -7,13 +7,11 @@
 .weatherPrimary { color: #29241f; font-size: 12px; font-weight: 600; }
 .weatherMuted { color: #756e63; }
 .weatherSlot { position: absolute; top: 0; right: 20px; z-index: 1; }
-.canvas { position: absolute; top: 124px; right: 24px; left: 24px; height: 330px; overflow: hidden; background: #fffefb; border: 1px solid #c2b8ab; border-radius: 24px; touch-action: none; }
+.canvas { composes: detailFrame from "./CollageFormFrame.module.css"; position: absolute; top: 124px; right: 24px; left: 24px; height: 330px; overflow: hidden; touch-action: none; }
 .piece { width: 100%; height: 100%; object-fit: contain; user-select: none; pointer-events: none; }
 .selected { outline: 1.5px solid #29241f; outline-offset: 2px; }
-.nameField { position: absolute; top: 469px; right: 24px; left: 24px; display: flex; flex-direction: column; gap: 6px; color: #756e63; font-family: "Old Standard TT", Georgia, serif; font-size: 11px; font-weight: 600; }
-.nameInput { width: 100%; height: 42px; padding: 0 14px; color: #29241f; background: #fffefb; border: 1px solid #c2b8ab; border-radius: 14px; outline: 0; font-family: "Old Standard TT", Georgia, serif; font-size: 14px; font-weight: 400; }
-.nameInput:focus { border: 1.5px solid #29241f; }
-.nameInput::placeholder { color: #9a9288; }
+.nameField { composes: fieldLabel from "./CollageFormFrame.module.css"; position: absolute; top: 469px; right: 24px; left: 24px; display: flex; flex-direction: column; gap: 8px; }
+.nameInput { composes: inputFrame from "./CollageFormFrame.module.css"; width: 100%; height: 42px; padding: 0 14px; }
 .controls { position: absolute; top: 50%; right: 10px; z-index: 100; display: flex; width: 42px; flex-direction: column; align-items: center; gap: 2px; padding: 4px; background: transparent; border: 1px solid #c2b8ab; border-radius: 14px; transform: translateY(-50%); }
 .control { display: grid; width: 32px; height: 32px; place-items: center; padding: 0; color: #29241f; background: transparent; border: 0; border-radius: 9px; }
 .control:not(:disabled):hover { background: rgb(41 36 31 / 7%); }
@@ -46,9 +44,9 @@
 .drawerState { grid-column: 1 / -1; margin: 15px 8px; color: #756e63; font-size: 12px; line-height: 1.45; text-align: center; }
 .drawerState a { text-decoration: underline; }
 .actions { position: absolute; top: 666px; right: 24px; left: 24px; display: flex; gap: 12px; }
-.action { height: 52px; flex: 1; border: 1px solid #29241f; border-radius: 16px; font-size: 14px; font-weight: 600; }
-.secondary { background: #fffefb; }
+.action { composes: actionFrame from "./CollageFormFrame.module.css"; flex: 1; }
+.secondary { color: #29241f; background: #fff; }
 .danger { color: #fffefb; background: #c74038; border-color: #c74038; }
-.primary { background: #c7ff40; border-color: #c7ff40; }
+.primary { color: #29241f; background: #ffe500; }
 .action:disabled { cursor: not-allowed; opacity: .5; }
 .error { position: absolute; top: 724px; right: 24px; left: 24px; color: #a33f39; font-size: 11px; text-align: center; }
