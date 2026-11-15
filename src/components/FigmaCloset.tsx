@@ -7,23 +7,24 @@ import { BottomNavigation } from "./BottomNavigation";
 import { ClothingCard } from "./ClothingCard";
 import { CollagePageHeader } from "./CollagePageHeader";
 import { useHorizontalDragScroll } from "@/hooks/useHorizontalDragScroll";
-import { db } from "@/lib/db";
+import { useWardrobe } from "./AccountProvider";
 import { CLOTHING_CATEGORIES, type ClothingCategory } from "@/lib/types";
 import styles from "./FigmaCloset.module.css";
 
 type Filter = "All" | ClothingCategory;
 
 export default function FigmaCloset() {
+  const wardrobe = useWardrobe();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<Filter>("All");
   const filterDrag = useHorizontalDragScroll<HTMLDivElement>();
   const query = useLiveQuery(async () => {
     try {
-      return { items: await db.clothingItems.orderBy("createdAt").reverse().toArray(), error: "" };
+      return { items: await wardrobe.items(), error: "" };
     } catch {
       return { items: [], error: "Your local closet could not be opened in this browser." };
     }
-  }, []);
+  }, [wardrobe]);
   const items = query?.items;
   const databaseError = query?.error ?? "";
 

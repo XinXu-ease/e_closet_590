@@ -1,12 +1,13 @@
 "use client";
 /* eslint-disable @next/next/no-img-element -- IndexedDB Blob URLs are local and cannot use the Next image optimizer. */
 
+import { localId } from "@/lib/local-id";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { useObjectUrl } from "@/hooks/useObjectUrl";
-import { db, deleteClothingItemCascade } from "@/lib/db";
+import { useWardrobe } from "./AccountProvider";
 import {
   CLOTHING_CATEGORIES,
   getDisplayImage,
@@ -72,15 +73,16 @@ function formatError(error: unknown) {
 }
 
 export default function FigmaItemDetail({ mode, itemId }: FigmaItemDetailProps) {
+  const wardrobe = useWardrobe();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const itemQuery = useLiveQuery(async () => {
     try {
-      return { item: itemId ? (await db.clothingItems.get(itemId)) ?? null : null, error: "" };
+      return { item: itemId ? (await wardrobe.item(itemId)) ?? null : null, error: "" };
     } catch {
       return { item: null, error: "Your local closet could not be opened in this browser." };
     }
-  }, [itemId]);
+  }, [itemId, wardrobe]);
   const item = itemQuery?.item;
   const loadError = itemQuery?.error ?? "";
   const [initializedId, setInitializedId] = useState<string | null>(null);
@@ -124,6 +126,7 @@ export default function FigmaItemDetail({ mode, itemId }: FigmaItemDetailProps) 
     setProcessedImage(undefined);
     try {
       const preparedImage = await prepareImageForRemoval(file);
+      if (preparedImage.size > 4 * 1024 * 1024) throw new Error("This photo is still too large to process. Please choose a smaller image.");
       const body = new FormData();
       body.append("image", preparedImage);
       const response = await fetch("/api/remove-background", {
@@ -191,8 +194,8 @@ export default function FigmaItemDetail({ mode, itemId }: FigmaItemDetailProps) 
     try {
       const now = Date.now();
       if (mode === "add") {
-        await db.clothingItems.add({
-          id: crypto.randomUUID(),
+        await wardrobe.saveItem({
+          id: localId(),
           name: name.trim(),
           category: category as ClothingCategory,
           colorTag: colorTag as ColorTagId,
@@ -200,9 +203,9 @@ export default function FigmaItemDetail({ mode, itemId }: FigmaItemDetailProps) 
           processedImage: processedImage as Blob,
           createdAt: now,
           updatedAt: now,
-        });
+        }, true);
       } else if (item) {
-        await db.clothingItems.put({
+        await wardrobe.saveItem({
           ...item,
           name: name.trim(),
           category: category as ClothingCategory,
@@ -224,7 +227,7 @@ export default function FigmaItemDetail({ mode, itemId }: FigmaItemDetailProps) 
     setSaving(true);
     setError("");
     try {
-      await deleteClothingItemCascade(item.id);
+      await wardrobe.deleteItem(item.id);
       router.push("/closet");
     } catch (deleteError) {
       setError(formatError(deleteError));

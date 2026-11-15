@@ -23,6 +23,7 @@ export type ColorTagId = keyof typeof COLOR_TAGS;
 
 export type ClothingItem = {
   id: string;
+  ownerId: string;
   name: string;
   category: ClothingCategory;
   colorTag: ColorTagId;
@@ -44,6 +45,7 @@ export type OutfitPiece = {
 
 export type Outfit = {
   id: string;
+  ownerId: string;
   name: string;
   pieces: OutfitPiece[];
   createdAt: number;

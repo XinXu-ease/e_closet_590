@@ -2,6 +2,8 @@
   --ink: #20211f;
 }
 
+.account-loading { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 24px; text-align: center; }
+
 * {
   box-sizing: border-box;
 }

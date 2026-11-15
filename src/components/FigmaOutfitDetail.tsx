@@ -1,6 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element -- IndexedDB Blob URLs are local and cannot use the Next image optimizer. */
 
+import { localId } from "@/lib/local-id";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -13,7 +14,7 @@ import { OutfitWeather } from "./OutfitWeather";
 import { useElementSize } from "@/hooks/useElementSize";
 import { useHorizontalDragScroll } from "@/hooks/useHorizontalDragScroll";
 import { useObjectUrl } from "@/hooks/useObjectUrl";
-import { db } from "@/lib/db";
+import { useWardrobe } from "./AccountProvider";
 import { CLOTHING_CATEGORIES, COLOR_TAGS, getDisplayImage, type ClothingCategory, type ClothingItem, type ColorTagId, type OutfitPiece } from "@/lib/types";
 import styles from "./FigmaOutfitDetail.module.css";
 
@@ -51,6 +52,7 @@ function CanvasImage({ item }: { item: ClothingItem }) {
 }
 
 export default function FigmaOutfitDetail({ mode, outfitId }: FigmaOutfitDetailProps) {
+  const wardrobe = useWardrobe();
   const router = useRouter();
   const canvasRef = useRef<HTMLDivElement>(null);
   const canvasSize = useElementSize(canvasRef);
@@ -68,18 +70,18 @@ export default function FigmaOutfitDetail({ mode, outfitId }: FigmaOutfitDetailP
 
   const itemsQuery = useLiveQuery(async () => {
     try {
-      return { items: await db.clothingItems.orderBy("createdAt").reverse().toArray(), error: "" };
+      return { items: await wardrobe.items(), error: "" };
     } catch {
       return { items: [], error: "Your local closet could not be opened in this browser." };
     }
-  }, []);
+  }, [wardrobe]);
   const outfitQuery = useLiveQuery(async () => {
     try {
-      return { outfit: outfitId ? (await db.outfits.get(outfitId)) ?? null : null, error: "" };
+      return { outfit: outfitId ? (await wardrobe.outfit(outfitId)) ?? null : null, error: "" };
     } catch {
       return { outfit: null, error: "The saved outfit database could not be opened." };
     }
-  }, [outfitId]);
+  }, [outfitId, wardrobe]);
   const items = itemsQuery?.items;
   const outfit = outfitQuery?.outfit;
 
@@ -117,7 +119,7 @@ export default function FigmaOutfitDetail({ mode, outfitId }: FigmaOutfitDetailP
       const heightPct = canvasSize.height > 0 ? Math.min(.8, (canvasSize.width * widthPct / aspect) / canvasSize.height) : .34;
       const offsetX = canvasSize.width ? ((pieces.length * 12) % 60) / canvasSize.width : 0;
       const offsetY = canvasSize.height ? ((pieces.length * 12) % 60) / canvasSize.height : 0;
-      const instanceId = crypto.randomUUID();
+      const instanceId = localId();
       const layer = pieces.length ? Math.max(...pieces.map((piece) => piece.layer)) + 1 : 0;
       setPieces((current) => [...current, {
         instanceId,
@@ -144,7 +146,7 @@ export default function FigmaOutfitDetail({ mode, outfitId }: FigmaOutfitDetailP
 
   const duplicate = () => {
     if (!selected) return;
-    const instanceId = crypto.randomUUID();
+    const instanceId = localId();
     const dx = canvasSize.width ? 12 / canvasSize.width : .03;
     const dy = canvasSize.height ? 12 / canvasSize.height : .03;
     const copy = { ...selected, instanceId, xPct: Math.min(1 - selected.widthPct, selected.xPct + dx), yPct: Math.min(1 - selected.heightPct, selected.yPct + dy), layer: Math.max(...pieces.map((piece) => piece.layer)) + 1 };
@@ -169,9 +171,9 @@ export default function FigmaOutfitDetail({ mode, outfitId }: FigmaOutfitDetailP
       const now = Date.now();
       const savedName = name.trim() || datePlaceholder || localDateName();
       if (mode === "edit" && outfit) {
-        await db.outfits.put({ ...outfit, name: savedName, pieces, updatedAt: now });
+        await wardrobe.saveOutfit({ ...outfit, name: savedName, pieces, updatedAt: now });
       } else {
-        await db.outfits.add({ id: crypto.randomUUID(), name: savedName, pieces, createdAt: now, updatedAt: now });
+        await wardrobe.saveOutfit({ id: localId(), name: savedName, pieces, createdAt: now, updatedAt: now }, true);
       }
       router.push("/outfits");
     } catch {
@@ -184,7 +186,7 @@ export default function FigmaOutfitDetail({ mode, outfitId }: FigmaOutfitDetailP
     if (!outfit || !window.confirm(`Delete “${outfit.name}”?`)) return;
     setSaving(true);
     try {
-      await db.outfits.delete(outfit.id);
+      await wardrobe.deleteOutfit(outfit.id);
       router.push("/outfits");
     } catch {
       setError("The outfit could not be deleted.");

@@ -6,24 +6,31 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "tsx --test tests/*.test.ts",
+    "test:browser": "playwright test"
   },
   "dependencies": {
     "@fontsource/inter": "^5.3.0",
     "@fontsource/old-standard-tt": "^5.3.0",
+    "@supabase/supabase-js": "2.119.0",
     "dexie": "^4.4.6",
     "dexie-react-hooks": "^4.4.0",
+    "fflate": "0.8.3",
     "next": "latest",
     "react": "latest",
     "react-dom": "latest",
     "react-rnd": "^10.5.3"
   },
   "devDependencies": {
+    "@playwright/test": "1.65.0",
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "eslint": "latest",
     "eslint-config-next": "latest",
+    "fake-indexeddb": "6.2.8",
+    "tsx": "4.23.15",
     "typescript": "latest"
   }
 }

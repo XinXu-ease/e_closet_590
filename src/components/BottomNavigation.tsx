@@ -20,7 +20,7 @@ const items: Array<{
 export function BottomNavigation({ active }: { active: ActivePage }) {
   return <nav className={styles.navigation} aria-label="Primary navigation">
     {items.map((item) => (
-      <Link key={item.id} href={item.href} className={`${styles.item} ${active === item.id ? styles.active : ""}`}>
+      <Link key={item.id} href={item.href} aria-current={active === item.id ? "page" : undefined} className={`${styles.item} ${active === item.id ? styles.active : ""}`}>
         <span className={`${styles.imageFrame} ${styles[item.imageClass]}`} aria-hidden="true">
           <img src={item.image} alt="" />
         </span>

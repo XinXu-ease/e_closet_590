@@ -7,7 +7,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { BottomNavigation } from "./BottomNavigation";
 import { CollagePageHeader } from "./CollagePageHeader";
 import { useObjectUrl } from "@/hooks/useObjectUrl";
-import { db } from "@/lib/db";
+import { useWardrobe } from "./AccountProvider";
 import { getDisplayImage, type ClothingItem, type OutfitPiece } from "@/lib/types";
 import styles from "./FigmaSavedOutfits.module.css";
 
@@ -18,15 +18,16 @@ function PreviewPiece({ piece, item }: { piece: OutfitPiece; item: ClothingItem 
 }
 
 export default function FigmaSavedOutfits() {
+  const wardrobe = useWardrobe();
   const [search, setSearch] = useState("");
   const outfitsQuery = useLiveQuery(async () => {
-    try { return { outfits: await db.outfits.orderBy("updatedAt").reverse().toArray(), error: "" }; }
+    try { return { outfits: await wardrobe.outfits(), error: "" }; }
     catch { return { outfits: [], error: "Saved outfits could not be opened in this browser." }; }
-  }, []);
+  }, [wardrobe]);
   const itemsQuery = useLiveQuery(async () => {
-    try { return { items: await db.clothingItems.toArray(), error: "" }; }
+    try { return { items: await wardrobe.items(), error: "" }; }
     catch { return { items: [], error: "Clothing images could not be opened in this browser." }; }
-  }, []);
+  }, [wardrobe]);
   const outfits = outfitsQuery?.outfits;
   const items = itemsQuery?.items;
   const databaseError = outfitsQuery?.error || itemsQuery?.error || "";

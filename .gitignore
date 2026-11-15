@@ -8,4 +8,6 @@ npm-debug.log*
 *.tsbuildinfo
 __pycache__/
 *.pyc
+.artifacts/
+playwright-report/
 src/generated/figma-layout.local.json
