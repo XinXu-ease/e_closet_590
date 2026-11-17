@@ -1,6 +1,6 @@
 # E-Closet
 
-E-Closet is a responsive digital wardrobe with optional phone accounts. Users can manage clothing, search and filter their local closet, build outfits on a draggable canvas, and reopen saved looks.
+E-Closet is a responsive digital wardrobe with optional email accounts. Users can manage clothing, search and filter their local closet, build outfits on a draggable canvas, and reopen saved looks.
 
 ## Features
 
@@ -11,7 +11,7 @@ E-Closet is a responsive digital wardrobe with optional phone accounts. Users ca
 - Drag, resize, layer, duplicate, and remove outfit pieces
 - Save and reopen outfits with responsive thumbnail previews
 - Display local weather in the Outfit Builder with Open-Meteo
-- Profile with Supabase phone sign-in, editable information and preset avatars
+- Profile with Supabase email code sign-in (phone support can be enabled later), editable information and preset avatars
 - Separate local wardrobes for guests and accounts, with ZIP backup and restore
 
 ## Tech Stack

@@ -1,7 +1,8 @@
-import { currentSession, HttpError, json, rateLimit, requestBody, requireRecent, route } from "@/lib/auth/server";
+import { phoneEnabled, currentSession, HttpError, json, rateLimit, requestBody, requireRecent, route } from "@/lib/auth/server";
 import { phoneNumber } from "@/lib/profile";
 
 export const POST = route(async (request) => {
+  if (!phoneEnabled()) throw new HttpError(403, "Phone sign-in is not enabled yet.");
   const { client, session } = await currentSession();
   await requireRecent(session);
   const body = await requestBody(request);

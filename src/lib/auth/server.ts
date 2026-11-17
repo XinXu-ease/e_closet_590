@@ -12,11 +12,12 @@ const REFRESH = "ec-refresh";
 const RECENT = "ec-recent";
 const cookieOptions = { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax" as const, path: "/" };
 
+export function phoneEnabled() { return process.env.AUTH_PHONE_ENABLED === "true"; }
 export function configured() {
   return Boolean(process.env.AUTH_PROVIDER_URL && process.env.AUTH_PROVIDER_PUBLISHABLE_KEY && process.env.AUTH_PROVIDER_SECRET_KEY);
 }
 export function authClient(admin = false) {
-  if (!configured()) throw new HttpError(503, "Phone sign-in is not available yet. You can still use your local closet.");
+  if (!configured()) throw new HttpError(503, "Account sign-in is not available yet. You can still use your local closet.");
   return createClient(process.env.AUTH_PROVIDER_URL!, admin ? process.env.AUTH_PROVIDER_SECRET_KEY! : process.env.AUTH_PROVIDER_PUBLISHABLE_KEY!, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
     global: { fetch: (input, init) => fetch(input, { ...init, signal: AbortSignal.timeout(12_000), cache: "no-store" }) },
@@ -62,7 +63,7 @@ export async function readProfile(user: User): Promise<Profile> {
   const { data, error } = await admin.from("profiles").select("display_name,avatar_key,created_at").eq("user_id", user.id).single();
   if (error) throw new HttpError(503, "Your profile could not be opened. Please try again later.");
   const phone = user.phone ? `+${user.phone.replace(/^\+/, "")}` : "";
-  return { id: user.id, displayName: data.display_name, avatarKey: data.avatar_key, phone: phone ? `${phone.slice(0, 3)} ••• ${phone.slice(-4)}` : "", createdAt: data.created_at };
+  return { id: user.id, displayName: data.display_name, avatarKey: data.avatar_key, email: user.email ? `${user.email.slice(0, 1)}***@${user.email.split("@")[1]}` : "", phone: phone ? `${phone.slice(0, 3)} ••• ${phone.slice(-4)}` : "", createdAt: data.created_at };
 }
 function sessionId(session: Session) {
   return String(JSON.parse(Buffer.from(session.access_token.split(".")[1], "base64url").toString()).session_id);
@@ -77,7 +78,7 @@ export async function requireRecent(session: Session) {
   const expected = value ? sign(value) : "";
   const [userId, sid, expiry] = (value ?? "").split(":");
   if (!signature || !/^[A-Za-z0-9_-]{43}$/.test(signature) || signature.length !== expected.length || !timingSafeEqual(Buffer.from(signature), Buffer.from(expected)) || userId !== session.user.id || sid !== sessionId(session) || !Number.isFinite(Number(expiry)) || Number(expiry) < Date.now()) {
-    throw new HttpError(403, "Verify your current phone number again before this account change.");
+    throw new HttpError(403, "Verify your identity again before this account change.");
   }
 }
 export async function rateLimit(request: Request, action: string, phone = "") {
@@ -124,6 +125,6 @@ export function route(handler: (request: Request) => Promise<Response>) {
   };
 }
 export function otp(value: unknown) {
-  if (typeof value !== "string" || !/^\d{6,8}$/.test(value)) throw new HttpError(400, "Enter the code from your text message.");
+  if (typeof value !== "string" || !/^\d{6,8}$/.test(value)) throw new HttpError(400, "Enter the verification code you received.");
   return value;
 }

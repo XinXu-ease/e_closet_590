@@ -1,14 +1,16 @@
-import { authClient, currentSession, HttpError, json, markRecent, otp, rateLimit, readProfile, requestBody, route, setSessionCookies } from "@/lib/auth/server";
-import { phoneNumber } from "@/lib/profile";
+import { authClient, currentSession, HttpError, json, markRecent, otp, readProfile, setSessionCookies, phoneEnabled, rateLimit, requestBody, route } from "@/lib/auth/server";
+import { otpIdentity } from "@/lib/auth/identity";
 
 export const POST = route(async (request) => {
   const body = await requestBody(request);
   const current = body.purpose === "reauthenticate" ? await currentSession() : null;
-  let phone: string;
-  try { phone = phoneNumber(current ? `+${current.user.phone?.replace(/^\+/, "")}` : body.phone); } catch (error) { throw new HttpError(400, (error as Error).message); }
+  let identity;
+  try { identity = otpIdentity(body, current?.user ?? null, phoneEnabled()); }
+  catch (error) { throw new HttpError(400, (error as Error).message); }
+  const { channel, address } = identity;
   const token = otp(body.code);
-  await rateLimit(request, "verify", phone);
-  const { data, error } = await authClient().auth.verifyOtp({ phone, token, type: "sms" });
+  await rateLimit(request, "verify", `${channel}:${address}`);
+  const { data, error } = await authClient().auth.verifyOtp(channel === "email" ? { email: address, token, type: "email" } : { phone: address, token, type: "sms" });
   if (error || !data.session || !data.user || (current && data.user.id !== current.user.id)) throw new HttpError(400, "That code is invalid or has expired. Please try again.");
   const profile = await readProfile(data.user);
   await setSessionCookies(data.session);

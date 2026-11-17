@@ -1,15 +1,15 @@
-import { authClient, clearSessionCookies, configured, currentSession, HttpError, json, readProfile, requestBody, requireRecent, route } from "@/lib/auth/server";
+import { authClient, clearSessionCookies, configured, phoneEnabled, currentSession, HttpError, json, readProfile, requestBody, requireRecent, route } from "@/lib/auth/server";
 import { profileInput } from "@/lib/profile";
 
 export const GET = route(async () => {
   const support = process.env.SUPPORT_EMAIL ?? "";
   const supportEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(support) ? support : null;
-  if (!configured()) return json({ profile: null, configured: false, supportEmail });
+  if (!configured()) return json({ profile: null, configured: false, supportEmail, phoneEnabled: phoneEnabled() });
   try {
     const { user } = await currentSession();
-    return json({ profile: await readProfile(user), configured: true, supportEmail });
+    return json({ profile: await readProfile(user), configured: true, supportEmail, phoneEnabled: phoneEnabled() });
   } catch (error) {
-    if (error instanceof HttpError && error.status === 401) return json({ profile: null, configured: true, supportEmail });
+    if (error instanceof HttpError && error.status === 401) return json({ profile: null, configured: true, supportEmail, phoneEnabled: phoneEnabled() });
     throw error;
   }
 });

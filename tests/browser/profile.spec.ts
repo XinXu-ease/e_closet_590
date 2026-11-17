@@ -1,6 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 
-const profile = { id: "11111111-1111-4111-8111-111111111111", displayName: "Name", avatarKey: "cat", phone: "+1 ••• 0123", createdAt: "2026-11-11T00:00:00Z" };
+const profile = { id: "11111111-1111-4111-8111-111111111111", displayName: "Name", avatarKey: "cat", email: "n***@example.com", phone: "+1 ••• 0123", createdAt: "2026-11-11T00:00:00Z" };
 
 async function seedLocalCloset(page: Page, count = 2, outfits = 1) {
   await page.evaluate(async ({ count, outfits }) => {
@@ -29,7 +29,7 @@ test("guest Profile has usable menus and clearly reports unconfigured sign-in", 
   await expect(page.getByRole("dialog")).toContainText("Sign in to save your name");
   await page.getByRole("button", { name: "Close dialog" }).click();
   await page.getByRole("button", { name: "Log in / Register", exact: true }).click();
-  await expect(page.getByRole("dialog")).toContainText("Phone sign-in is not available yet");
+  await expect(page.getByRole("dialog")).toContainText("Account sign-in is not available yet");
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await page.screenshot({ path: ".artifacts/profile-guest.png", fullPage: true });
@@ -88,7 +88,7 @@ test("local export, confirmed clear and import restore images and counts", async
   await expect(page.getByRole("link", { name: "1 saved outfits" })).toBeVisible();
 });
 
-test("phone OTP form handles errors, resend cooldown and successful login without moving guest data", async ({ page }) => {
+test("email OTP form handles errors, resend cooldown and successful login without moving guest data", async ({ page }) => {
   let signedIn = false;
   await page.route("**/api/me", route => route.fulfill({ json: { profile: signedIn ? profile : null, configured: true, supportEmail: null } }));
   await page.route("**/api/auth/otp/request", route => route.fulfill({ json: { sent: true, retryAfter: 60 } }));
@@ -99,7 +99,8 @@ test("phone OTP form handles errors, resend cooldown and successful login withou
   await page.goto("/profile"); await expect(page.getByRole("heading", { name: "Guest", exact: true })).toBeVisible();
   await seedLocalCloset(page);
   await page.getByRole("button", { name: "Log in / Register", exact: true }).click();
-  await page.getByLabel("Phone number", { exact: true }).fill("+12125550123");
+  await page.getByLabel("Email address", { exact: true }).fill("name@example.com");
+  await expect(page.getByLabel("Phone number", { exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "Send code", exact: true }).click();
   await expect(page.getByRole("button", { name: /Resend in/ })).toBeDisabled();
   await page.getByLabel("Verification code").fill("000000");
@@ -115,12 +116,36 @@ test("phone OTP form handles errors, resend cooldown and successful login withou
   await expect(page.getByRole("status")).toContainText("guest closet now belongs");
 });
 
+test("email account reauthenticates before showing deletion confirmation", async ({ page }) => {
+  await page.route("**/api/me", route => route.fulfill({ json: { profile: { ...profile, phone: "" }, configured: true, phoneEnabled: false, supportEmail: null } }));
+  await page.route("**/api/auth/otp/request", route => {
+    expect(route.request().postDataJSON()).toMatchObject({ channel: "email", purpose: "reauthenticate" });
+    return route.fulfill({ json: { sent: true, retryAfter: 60 } });
+  });
+  await page.route("**/api/auth/otp/verify", route => {
+    expect(route.request().postDataJSON()).toMatchObject({ channel: "email", purpose: "reauthenticate", code: "123456" });
+    return route.fulfill({ json: { profile } });
+  });
+  await page.goto("/profile");
+  await page.getByRole("button", { name: "Information", exact: true }).click();
+  await expect(page.getByRole("dialog")).toContainText("n***@example.com");
+  await expect(page.getByRole("button", { name: "Change phone number", exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "Close dialog" }).click();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.getByRole("button", { name: "Delete account", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Permanently delete my account" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Send code", exact: true }).click();
+  await page.getByLabel("Verification code").fill("123456");
+  await page.getByRole("button", { name: "Verify code", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Permanently delete my account" })).toBeVisible();
+});
+
 test("account API rejects cross-origin changes and unauthenticated profile writes", async ({ request }) => {
   const rejected = await request.patch("/api/me", { headers: { Origin: "https://untrusted.example" }, data: { displayName: "X", avatarKey: "cat" } });
   expect(rejected.status()).toBe(403);
   const unauthenticated = await request.patch("/api/me", { headers: { Origin: "http://127.0.0.1:3100" }, data: { displayName: "X", avatarKey: "cat" } });
   expect(unauthenticated.status()).toBe(401);
-  const invalidPhone = await request.post("/api/auth/otp/request", { headers: { Origin: "http://127.0.0.1:3100" }, data: { phone: "bad" } });
+  const invalidPhone = await request.post("/api/auth/otp/request", { headers: { Origin: "http://127.0.0.1:3100" }, data: { email: "bad" } });
   expect(invalidPhone.status()).toBe(400);
   const me = await request.get("/api/me"); expect(me.status()).toBe(200);
   expect((await me.json()).profile).toBeNull();

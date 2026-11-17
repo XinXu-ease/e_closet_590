@@ -7,7 +7,7 @@ import type { AccountResponse, Profile } from "@/lib/profile";
 
 type AccountContextValue = {
   ownerId: string; guestOwner: string; profile: Profile | null;
-  configured: boolean; offline: boolean; supportEmail: string | null;
+  configured: boolean; phoneEnabled: boolean; offline: boolean; supportEmail: string | null;
   acceptProfile: (profile: Profile | null) => Promise<void>;
   refresh: () => Promise<void>;
 };
@@ -15,6 +15,7 @@ const AccountContext = createContext<AccountContextValue | null>(null);
 
 export function AccountProvider({ children }: { children: React.ReactNode }) {
   const [account, setAccount] = useState<LocalAccount>();
+  const [phoneEnabled, setPhoneEnabled] = useState(false);
   const [configured, setConfigured] = useState(false);
   const [offline, setOffline] = useState(false);
   const [supportEmail, setSupportEmail] = useState<string | null>(null);
@@ -41,6 +42,7 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
       const next = await activateProfile(response.profile);
       setAccount(next);
       setConfigured(response.configured);
+      setPhoneEnabled(response.phoneEnabled === true);
       setSupportEmail(response.supportEmail);
       setOffline(false);
       setError("");
@@ -74,7 +76,7 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
   }, [refresh]);
 
   if (!account) return <main className="account-loading" role="status">{error || "Opening your closet…"}{error ? <button onClick={() => void refresh()}>Try again</button> : null}</main>;
-  return <AccountContext.Provider value={{ ownerId: account.activeOwner, guestOwner: account.guestOwner, profile: account.profile, configured, offline, supportEmail, acceptProfile, refresh }}>
+  return <AccountContext.Provider value={{ ownerId: account.activeOwner, guestOwner: account.guestOwner, profile: account.profile, configured, phoneEnabled, offline, supportEmail, acceptProfile, refresh }}>
     <div key={account.activeOwner}>{children}</div>
   </AccountContext.Provider>;
 }

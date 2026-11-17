@@ -1,7 +1,14 @@
 export const AVATARS = ["cat", "closet", "pin"] as const;
 export type AvatarKey = typeof AVATARS[number];
-export type Profile = { id: string; displayName: string; avatarKey: AvatarKey; phone: string; createdAt: string };
-export type AccountResponse = { profile: Profile | null; configured: boolean; supportEmail: string | null };
+export type Profile = { id: string; displayName: string; avatarKey: AvatarKey; phone: string; email?: string; createdAt: string };
+export type AccountResponse = { profile: Profile | null; configured: boolean; supportEmail: string | null; phoneEnabled?: boolean };
+
+export function emailAddress(value: unknown): string {
+  if (typeof value !== "string") throw new Error("Enter a valid email address.");
+  const email = value.trim().toLowerCase();
+  if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Enter a valid email address.");
+  return email;
+}
 
 export function phoneNumber(value: unknown): string {
   if (typeof value !== "string") throw new Error("Enter a phone number including its country code.");

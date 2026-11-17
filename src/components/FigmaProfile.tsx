@@ -11,7 +11,7 @@ import { AVATARS, type AvatarKey, type Profile } from "@/lib/profile";
 import { exportWardrobe, importWardrobe, inspectArchive, type WardrobeImport } from "@/lib/wardrobe-archive";
 import { finishLocalAccountDeletion, useAccount, useWardrobe } from "./AccountProvider";
 import { BottomNavigation } from "./BottomNavigation";
-import { PhoneForm } from "./PhoneForm";
+import { AuthCodeForm } from "./AuthCodeForm";
 import { ProfileDialog } from "./ProfileDialog";
 import styles from "./FigmaProfile.module.css";
 
@@ -94,13 +94,13 @@ export default function FigmaProfile({ initialPanel }: { initialPanel?: "login" 
     {offline || stats?.error ? <p className={styles.offline} role="status">{stats?.error || "Account service is offline. Your local closet is still here."}</p> : null}
     <BottomNavigation active="profile" />
     {panel ? <ProfileDialog title={TITLES[panel]} onClose={close} busy={busy || deleted}>
-      {panel === "login" ? <PhoneForm onComplete={async (p) => { await account.acceptProfile(p); router.replace("/profile"); setPanel(null); }} /> : null}
+      {panel === "login" ? <AuthCodeForm onComplete={async (p) => { await account.acceptProfile(p); router.replace("/profile"); setPanel(null); }} /> : null}
       {panel === "information" ? profile ? <form className={styles.form} onSubmit={(e) => { e.preventDefault(); void saveProfile(); }}>
         <label className={styles.field}>Name<input value={name} onChange={(e) => setName(e.target.value)} maxLength={40} autoComplete="nickname" placeholder="Your name" disabled={busy} /></label>
-        <dl className={styles.details}><dt>Phone number</dt><dd>{profile.phone}</dd><dt>Member since</dt><dd>{new Date(profile.createdAt).toLocaleDateString()}</dd></dl>
+        <dl className={styles.details}>{profile.email ? <><dt>Email address</dt><dd>{profile.email}</dd></> : null}{profile.phone ? <><dt>Phone number</dt><dd>{profile.phone}</dd></> : null}<dt>Member since</dt><dd>{new Date(profile.createdAt).toLocaleDateString()}</dd></dl>
         <button className={styles.primary} disabled={busy || offline}>Save information</button>
-        <button type="button" className={styles.secondary} disabled={busy || offline} onClick={() => open("reauth-phone")}>Change phone number</button>
-        <p className={styles.note}>Clothing, outfits, and photos are saved only in this browser. Your account stores your name, avatar choice, and verified phone number.</p>
+        {account.phoneEnabled ? <button type="button" className={styles.secondary} disabled={busy || offline} onClick={() => open("reauth-phone")}>{profile.phone ? "Change phone number" : "Add phone number"}</button> : null}
+        <p className={styles.note}>Clothing, outfits, and photos are saved only in this browser. Your account stores your name, avatar choice, and verified sign-in details.</p>
       </form> : guestPrompt : null}
       {panel === "personalize" ? profile ? <form className={styles.form} onSubmit={(e) => { e.preventDefault(); void saveProfile(); }}>
         <p>Choose a little character for your profile.</p><fieldset className={styles.avatarChoices} aria-label="Choose your avatar">{AVATARS.map((key) => <label className={styles.avatarChoice} key={key}><input type="radio" name="avatar" value={key} checked={avatar === key} onChange={() => setAvatar(key)} disabled={busy} /><img src={AVATAR_IMAGES[key]} alt="" /><span>{key === "cat" ? "Cat" : key === "closet" ? "Closet" : "Pin"}</span></label>)}</fieldset>
@@ -120,8 +120,8 @@ export default function FigmaProfile({ initialPanel }: { initialPanel?: "login" 
       {panel === "claim" ? <div className={styles.stack}><p>Move {stats?.guestItems ?? 0} guest clothing items and {stats?.guestOutfits ?? 0} outfits into this account on this browser?</p><p className={styles.note}>They will leave the guest closet. Nothing is uploaded.</p><button className={styles.primary} disabled={busy} onClick={() => void run(async () => { await wardrobe.claimGuest(); setPanel("settings"); setMessage("Your guest closet now belongs to this account on this device."); })}>Bring my guest closet</button></div> : null}
       {panel === "clear" ? <div className={styles.stack}><p>Permanently remove {stats?.items ?? 0} clothing items, their photos, and {stats?.outfits ?? 0} outfits from this local closet?</p><p className={styles.note}>Your account and other local closets will stay. Export first if you want to keep a copy.</p><button className={styles.danger} disabled={busy} onClick={() => void run(async () => { await wardrobe.clear(); setPanel("settings"); setMessage("This local closet has been cleared."); })}>Permanently clear this closet</button></div> : null}
       {panel === "logout" ? <div className={styles.stack}><p>Your clothes and photos will stay in this browser, hidden until you sign in to this account again.</p><button className={styles.primary} disabled={busy || offline} onClick={() => void run(async () => { await api("/api/auth/logout", {}); await account.acceptProfile(null); setPanel(null); })}>Log out of this account</button></div> : null}
-      {panel === "reauth-delete" || panel === "reauth-phone" ? <PhoneForm key={panel} purpose="reauthenticate" onComplete={() => { setError(""); setPanel(panel === "reauth-delete" ? "delete" : "phone"); }} /> : null}
-      {panel === "phone" ? <PhoneForm purpose="change" onComplete={async (p) => { await account.acceptProfile(p); setPanel("information"); setMessage("Your phone number has been updated."); }} /> : null}
+      {panel === "reauth-delete" || panel === "reauth-phone" ? <AuthCodeForm key={panel} purpose="reauthenticate" onComplete={() => { setError(""); setPanel(panel === "reauth-delete" ? "delete" : "phone"); }} /> : null}
+      {panel === "phone" ? <AuthCodeForm purpose="change" onComplete={async (p) => { await account.acceptProfile(p); setPanel("information"); setMessage("Your phone number has been updated."); }} /> : null}
       {panel === "delete" ? <div className={styles.stack}><p>This permanently deletes your account, profile, and this account’s local wardrobe on this browser.</p><p className={styles.note}>Exported ZIP files and copies on other offline devices remain under your control. This cannot be undone.</p><button className={styles.danger} disabled={busy} onClick={() => void run(async () => {
         if (!deleted) { await api("/api/me", {}, "DELETE"); setDeleted(true); localStorage.setItem("e-closet-deleted-owner", ownerId); }
         await finishLocalAccountDeletion(ownerId); localStorage.removeItem("e-closet-deleted-owner"); await account.acceptProfile(null); setDeleted(false); setPanel(null);
