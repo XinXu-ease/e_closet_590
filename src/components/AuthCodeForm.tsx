@@ -52,6 +52,5 @@ export function AuthCodeForm({ purpose = "login", onComplete }: { purpose?: "log
     {error ? <p className={styles.error} role="alert">{error}</p> : null}
     <button className={styles.primary} disabled={busy}>{busy ? "Please wait…" : sentTo === undefined ? "Send code" : purpose === "login" ? "Verify & continue" : "Verify code"}</button>
     {sentTo !== undefined ? <div className={styles.inlineActions}><button type="button" onClick={() => void send()} disabled={busy || remaining > 0}>{remaining > 0 ? `Resend in ${remaining}s` : "Resend code"}</button>{purpose !== "reauthenticate" ? <button type="button" disabled={busy} onClick={() => { setSentTo(undefined); setError(""); }}>{channel === "email" ? "Change email" : "Change number"}</button> : null}</div> : null}
-    {purpose === "login" ? <p className={styles.note}>Your clothes and photos stay in this browser. Signing in does not back up or restore your closet.</p> : null}
   </form>;
 }

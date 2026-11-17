@@ -34,8 +34,12 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
       const local = await localAccount();
       let response: AccountResponse;
       try { response = await api<AccountResponse>("/api/me"); }
-      catch {
-        if (request === sequence.current) { setAccount(local); setOffline(true); }
+      catch (error) {
+        // A valid HTTP response can report an account-side problem (for example,
+        // an incomplete deployment migration). Only actual network failures put
+        // the interface into offline mode.
+        const networkFailure = error instanceof TypeError || (error instanceof DOMException && error.name === "AbortError");
+        if (request === sequence.current) { setAccount(local); setOffline(networkFailure); }
         return;
       }
       if (request !== sequence.current) return;

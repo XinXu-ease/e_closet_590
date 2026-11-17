@@ -118,6 +118,12 @@ export function wardrobeFor(ownerId: string, database = db) {
       await database.clothingItems.where("ownerId").equals(state.guestOwner).modify({ ownerId });
       await database.outfits.where("ownerId").equals(state.guestOwner).modify({ ownerId });
     }),
+    clearGuest: () => database.transaction("rw", database.settings, database.clothingItems, database.outfits, async () => {
+      await assertActive();
+      const state = (await database.settings.get("account"))!;
+      await database.clothingItems.where("ownerId").equals(state.guestOwner).delete();
+      await database.outfits.where("ownerId").equals(state.guestOwner).delete();
+    }),
   };
 }
 

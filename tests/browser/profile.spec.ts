@@ -29,6 +29,8 @@ test("guest Profile has usable menus and clearly reports unconfigured sign-in", 
   await expect(page.getByRole("dialog")).toContainText("Sign in to save your name");
   await page.getByRole("button", { name: "Close dialog" }).click();
   await page.getByRole("button", { name: "Log in / Register", exact: true }).click();
+  await expect(page.getByRole("dialog")).toContainText("Sign in to save your name and avatar");
+  await page.getByRole("dialog").getByRole("button", { name: "Log in / Register", exact: true }).click();
   await expect(page.getByRole("dialog")).toContainText("Account sign-in is not available yet");
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toHaveCount(0);
@@ -60,32 +62,17 @@ test("Figma Profile uses live totals, local assets and working information/avata
   await expect(page.getByRole("status")).toContainText("Your profile has been saved");
   await page.getByRole("button", { name: "Close dialog" }).click();
   await expect(page.getByRole("heading", { name: "Alex", exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Personalize", exact: true }).click();
-  await page.getByRole("radio", { name: "Pin", exact: true }).check();
-  await page.getByRole("button", { name: "Save avatar" }).click();
-  await expect(page.getByRole("status")).toContainText("Your profile has been saved");
-  await page.getByRole("button", { name: "Close dialog" }).click();
-  await expect(page.getByAltText("Your profile avatar")).toHaveAttribute("src", "/figma/profile-nav-saved.png");
+  await expect(page.getByRole("button", { name: "Personalize", exact: true })).toHaveCount(0);
 });
 
-test("local export, confirmed clear and import restore images and counts", async ({ page }) => {
+test("guest settings remains usable and reserves import/export for signed-in accounts", async ({ page }) => {
   await page.route("**/api/me", route => route.fulfill({ json: { profile: null, configured: false, supportEmail: null } }));
   await page.goto("/profile"); await expect(page.getByRole("heading", { name: "Guest", exact: true })).toBeVisible();
   await seedLocalCloset(page);
   await page.getByRole("button", { name: "Settings", exact: true }).click();
-  const downloadReady = page.waitForEvent("download");
-  await page.getByRole("button", { name: "Export closet", exact: true }).click();
-  const download = await downloadReady; const archive = await download.path();
-  await page.getByRole("button", { name: "Clear this local closet" }).click();
-  await page.getByRole("button", { name: "Permanently clear this closet" }).click();
-  await expect(page.getByRole("status")).toContainText("This local closet has been cleared");
-  await page.getByLabel("Choose closet archive").setInputFiles(archive!);
-  await expect(page.getByRole("dialog")).toContainText("Add 2 clothing items and 1 outfits");
-  await page.getByRole("button", { name: "Import 2 items" }).click();
-  await expect(page.getByRole("status")).toContainText("Your closet has been imported");
-  await page.getByRole("button", { name: "Close dialog" }).click();
-  await expect(page.getByRole("link", { name: "2 clothing items" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "1 saved outfits" })).toBeVisible();
+  await expect(page.getByRole("dialog").getByRole("heading", { name: "Settings" })).toBeVisible();
+  await expect(page.getByRole("dialog")).toContainText("Sign in to save your name and avatar");
+  await expect(page.getByRole("dialog")).not.toContainText("Your closet, on this device");
 });
 
 test("email OTP form handles errors, resend cooldown and successful login without moving guest data", async ({ page }) => {
@@ -94,11 +81,12 @@ test("email OTP form handles errors, resend cooldown and successful login withou
   await page.route("**/api/auth/otp/request", route => route.fulfill({ json: { sent: true, retryAfter: 60 } }));
   await page.route("**/api/auth/otp/verify", route => {
     if (route.request().postDataJSON().code !== "123456") return route.fulfill({ status: 400, json: { error: "That code is invalid or has expired." } });
-    signedIn = true; return route.fulfill({ json: { profile } });
+    signedIn = true; return route.fulfill({ json: { profile: { ...profile, setupComplete: false } } });
   });
   await page.goto("/profile"); await expect(page.getByRole("heading", { name: "Guest", exact: true })).toBeVisible();
   await seedLocalCloset(page);
   await page.getByRole("button", { name: "Log in / Register", exact: true }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Log in / Register", exact: true }).click();
   await page.getByLabel("Email address", { exact: true }).fill("name@example.com");
   await expect(page.getByLabel("Phone number", { exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "Send code", exact: true }).click();
@@ -110,10 +98,21 @@ test("email OTP form handles errors, resend cooldown and successful login withou
   await page.getByRole("button", { name: "Verify & continue" }).click();
   await expect(page.getByRole("heading", { name: "Name", exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "0 clothing items" })).toBeVisible();
-  await page.getByRole("button", { name: "Settings", exact: true }).click();
-  await page.getByRole("button", { name: "Bring guest closet into this account" }).click();
-  await page.getByRole("button", { name: "Bring my guest closet" }).click();
-  await expect(page.getByRole("status")).toContainText("guest closet now belongs");
+  await expect(page.getByRole("dialog")).toContainText("created before signing in");
+  await page.getByRole("button", { name: "Add", exact: true }).click();
+  await expect(page.getByRole("link", { name: "2 clothing items" })).toBeVisible();
+});
+
+test("item deletion uses the in-app confirmation frame", async ({ page }) => {
+  await page.route("**/api/me", route => route.fulfill({ json: { profile: null, configured: false, supportEmail: null } }));
+  await page.goto("/profile");
+  await seedLocalCloset(page, 1, 0);
+  await page.goto("/items/item-0");
+  await page.getByRole("button", { name: "Delete", exact: true }).click();
+  await expect(page.getByRole("dialog").getByRole("heading", { name: "Delete item" })).toBeVisible();
+  await expect(page.getByRole("dialog")).toContainText("Delete “Item 0” from your closet?");
+  await page.getByRole("dialog").getByRole("button", { name: "Cancel" }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
 });
 
 test("email account reauthenticates before showing deletion confirmation", async ({ page }) => {

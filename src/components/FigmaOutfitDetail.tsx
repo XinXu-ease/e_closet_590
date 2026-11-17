@@ -14,9 +14,13 @@ import { OutfitWeather } from "./OutfitWeather";
 import { useElementSize } from "@/hooks/useElementSize";
 import { useHorizontalDragScroll } from "@/hooks/useHorizontalDragScroll";
 import { useObjectUrl } from "@/hooks/useObjectUrl";
-import { useWardrobe } from "./AccountProvider";
+import { useAccount, useWardrobe } from "./AccountProvider";
+import { AuthCodeForm } from "./AuthCodeForm";
+import { ProfileDialog } from "./ProfileDialog";
+import { SignInPrompt } from "./SignInPrompt";
 import { CLOTHING_CATEGORIES, COLOR_TAGS, getDisplayImage, type ClothingCategory, type ClothingItem, type ColorTagId, type OutfitPiece } from "@/lib/types";
 import styles from "./FigmaOutfitDetail.module.css";
+import profileStyles from "./FigmaProfile.module.css";
 
 type FigmaOutfitDetailProps = { mode: "create" | "edit"; outfitId?: string };
 
@@ -53,6 +57,8 @@ function CanvasImage({ item }: { item: ClothingItem }) {
 
 export default function FigmaOutfitDetail({ mode, outfitId }: FigmaOutfitDetailProps) {
   const wardrobe = useWardrobe();
+  const account = useAccount();
+  const { profile } = account;
   const router = useRouter();
   const canvasRef = useRef<HTMLDivElement>(null);
   const canvasSize = useElementSize(canvasRef);
@@ -67,6 +73,9 @@ export default function FigmaOutfitDetail({ mode, outfitId }: FigmaOutfitDetailP
   const [initializedId, setInitializedId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [signInOpen, setSignInOpen] = useState(false);
+  const [showAuthForm, setShowAuthForm] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const itemsQuery = useLiveQuery(async () => {
     try {
@@ -161,6 +170,10 @@ export default function FigmaOutfitDetail({ mode, outfitId }: FigmaOutfitDetailP
   };
 
   const save = async () => {
+    if (!profile) {
+      setSignInOpen(true);
+      return;
+    }
     if (!pieces.length) {
       setError("Add at least one clothing item before saving.");
       return;
@@ -183,7 +196,7 @@ export default function FigmaOutfitDetail({ mode, outfitId }: FigmaOutfitDetailP
   };
 
   const removeOutfit = async () => {
-    if (!outfit || !window.confirm(`Delete “${outfit.name}”?`)) return;
+    if (!outfit) return;
     setSaving(true);
     try {
       await wardrobe.deleteOutfit(outfit.id);
@@ -244,10 +257,16 @@ export default function FigmaOutfitDetail({ mode, outfitId }: FigmaOutfitDetailP
     </section>
 
     <div className={styles.actions}>
-      {mode === "edit" ? <button type="button" className={`${styles.action} ${styles.danger}`} disabled={saving || !outfit} onClick={() => void removeOutfit()}>Delete</button> : <button type="button" className={`${styles.action} ${styles.secondary}`} disabled={saving} onClick={() => router.push("/outfits")}>Cancel</button>}
+      {mode === "edit" ? <button type="button" className={`${styles.action} ${styles.danger}`} disabled={saving || !outfit} onClick={() => setConfirmDelete(true)}>Delete</button> : <button type="button" className={`${styles.action} ${styles.secondary}`} disabled={saving} onClick={() => router.push("/outfits")}>Cancel</button>}
       <button type="button" className={`${styles.action} ${styles.primary}`} disabled={saving || pieces.length === 0 || missingOutfit || Boolean(databaseError)} onClick={() => void save()}>{saving ? "Saving…" : "Save"}</button>
     </div>
     {databaseError ? <p className={styles.error}>{databaseError}</p> : missingOutfit ? <p className={styles.error}>This outfit no longer exists.</p> : error ? <p className={styles.error} role="status">{error}</p> : null}
+    {signInOpen ? <ProfileDialog title="Outfit" onClose={() => { setSignInOpen(false); setShowAuthForm(false); }}>
+      {showAuthForm ? <AuthCodeForm onComplete={async (nextProfile) => { await account.acceptProfile(nextProfile); setSignInOpen(false); setShowAuthForm(false); }} /> : <SignInPrompt onLogin={() => setShowAuthForm(true)} />}
+    </ProfileDialog> : null}
+    {confirmDelete && outfit ? <ProfileDialog title="Delete outfit" onClose={() => setConfirmDelete(false)} busy={saving}>
+      <div className={profileStyles.stack}><p>Delete “{outfit.name}”? This cannot be undone.</p><button type="button" className={profileStyles.danger} disabled={saving} onClick={() => void removeOutfit()}>Delete outfit</button><button type="button" className={profileStyles.secondary} disabled={saving} onClick={() => setConfirmDelete(false)}>Cancel</button></div>
+    </ProfileDialog> : null}
     <BottomNavigation active="create" />
   </div>;
 }

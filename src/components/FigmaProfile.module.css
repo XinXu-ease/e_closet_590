@@ -55,4 +55,8 @@
 .details dd { margin: 0; overflow-wrap: anywhere; }
 .divider { border: 0; border-top: 1px solid #c7bdab; margin: 20px 0; }
 .hidden { display: none; }
+.avatarEditor { display: flex; flex-direction: column; gap: 10px; font-size: 14px; cursor: pointer; }
+.avatarPreview { display: block; width: 128px; height: 128px; overflow: hidden; border: 1px solid #29241f; background: white; }
+.avatarPreview img { width: 100%; height: 100%; object-fit: cover; }
+.avatarEditor .secondary { display: inline-block; width: auto; min-height: 0; padding: 8px 12px; text-align: center; }
 @media (max-width: 370px) { .avatar { width: 115px; height: 125px; right: 16px; } .greeting { width: 140px; } .statistics { left: 17px; width: 178px; } .greeting h1 { font-size: 26px; } }

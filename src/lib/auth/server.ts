@@ -60,10 +60,16 @@ export async function readProfile(user: User): Promise<Profile> {
   const admin = authClient(true);
   const created = await admin.from("profiles").upsert({ user_id: user.id }, { onConflict: "user_id", ignoreDuplicates: true });
   if (created.error) throw new HttpError(503, "Your profile could not be opened. Please try again later.");
-  const { data, error } = await admin.from("profiles").select("display_name,avatar_key,created_at").eq("user_id", user.id).single();
-  if (error) throw new HttpError(503, "Your profile could not be opened. Please try again later.");
+  const extended = await admin.from("profiles").select("display_name,avatar_key,created_at,avatar_path,setup_complete,updated_at").eq("user_id", user.id).single();
+  let data = extended.data;
+  if (extended.error && /avatar_path|setup_complete/.test(extended.error.message)) {
+    const legacy = await admin.from("profiles").select("display_name,avatar_key,created_at,updated_at").eq("user_id", user.id).single();
+    if (legacy.error) throw new HttpError(503, "Your profile could not be opened. Please try again later.");
+    data = { ...legacy.data, avatar_path: null, setup_complete: true };
+  } else if (extended.error) throw new HttpError(503, "Your profile could not be opened. Please try again later.");
+  if (!data) throw new HttpError(503, "Your profile could not be opened. Please try again later.");
   const phone = user.phone ? `+${user.phone.replace(/^\+/, "")}` : "";
-  return { id: user.id, displayName: data.display_name, avatarKey: data.avatar_key, email: user.email ? `${user.email.slice(0, 1)}***@${user.email.split("@")[1]}` : "", phone: phone ? `${phone.slice(0, 3)} ••• ${phone.slice(-4)}` : "", createdAt: data.created_at };
+  return { id: user.id, displayName: data.display_name, avatarKey: "cat", avatarUrl: data.avatar_path ? `/api/me/avatar?v=${encodeURIComponent(data.updated_at)}` : undefined, setupComplete: data.setup_complete, email: user.email ?? "", phone: phone ? `${phone.slice(0, 3)} ••• ${phone.slice(-4)}` : "", createdAt: data.created_at };
 }
 function sessionId(session: Session) {
   return String(JSON.parse(Buffer.from(session.access_token.split(".")[1], "base64url").toString()).session_id);

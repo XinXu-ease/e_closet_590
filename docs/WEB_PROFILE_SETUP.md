@@ -88,3 +88,8 @@ npm run start -- --port 3100 --hostname 127.0.0.1
 ## 后续 Capacitor
 
 本次仅完成 Web 阶段，未新增 iOS 工程。Mac / Xcode 环境、静态客户端与 Vercel API 分离步骤见 [`PROFILE_AND_CAPACITOR_PLAN.md`](./PROFILE_AND_CAPACITOR_PLAN.md)。当前 API 使用同源 Cookie；原生封装阶段必须专门适配 API 基地址、原生会话存储与认证传递、来源校验，不能只增加 Capacitor 配置便直接发布。
+# Profile MVP update: custom avatars
+
+Before deploying custom avatar uploads, run `supabase/migrations/202611160001_profile_avatar.sql` in the Supabase SQL Editor after the original profile migration. It adds the private `profile-avatars` storage bucket and profile fields used by the web app. Do not make this bucket public: the application serves each avatar only after checking the signed-in user.
+
+Avatar images are prepared in the browser as a square JPEG and limited to 512 KB. Clothes, outfit images, and outfit data remain in browser storage in this MVP; cloud wardrobe backup is intentionally not part of this setup.

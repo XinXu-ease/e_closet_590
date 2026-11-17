@@ -8,6 +8,8 @@ import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { useObjectUrl } from "@/hooks/useObjectUrl";
 import { useWardrobe } from "./AccountProvider";
+import { ProfileDialog } from "./ProfileDialog";
+import profileStyles from "./FigmaProfile.module.css";
 import {
   CLOTHING_CATEGORIES,
   getDisplayImage,
@@ -96,6 +98,7 @@ export default function FigmaItemDetail({ mode, itemId }: FigmaItemDetailProps) 
   const processingRequest = useRef(0);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     if (mode === "edit" && item && initializedId !== item.id) {
@@ -223,7 +226,7 @@ export default function FigmaItemDetail({ mode, itemId }: FigmaItemDetailProps) 
   };
 
   const remove = async () => {
-    if (!item || !window.confirm(`Delete “${item.name}” from your closet?`)) return;
+    if (!item) return;
     setSaving(true);
     setError("");
     try {
@@ -275,7 +278,7 @@ export default function FigmaItemDetail({ mode, itemId }: FigmaItemDetailProps) 
     </form> : null}
 
     {!isBlocked ? <div data-layer="Frame 16" className={styles.actions}>
-      {mode === "edit" ? <button type="button" className={`${styles.action} ${styles.danger}`} onClick={() => void remove()} disabled={saving || !item}>Delete</button> : <button type="button" className={`${styles.action} ${styles.secondary}`} onClick={() => router.push("/closet")} disabled={saving}>Cancel</button>}
+      {mode === "edit" ? <button type="button" className={`${styles.action} ${styles.danger}`} onClick={() => setConfirmDelete(true)} disabled={saving || !item}>Delete</button> : <button type="button" className={`${styles.action} ${styles.secondary}`} onClick={() => router.push("/closet")} disabled={saving}>Cancel</button>}
       <button type="button" className={`${styles.action} ${styles.primary}`} onClick={() => void save()} disabled={saving || processing || Boolean(isLoading) || isAddInvalid || newImageNeedsProcessing}>Save</button>
     </div> : null}
 
@@ -284,5 +287,12 @@ export default function FigmaItemDetail({ mode, itemId }: FigmaItemDetailProps) 
       <div data-layer="Title" className={styles.title}>Item Detail</div>
       <div data-layer="Mode" className={styles.mode}>{mode === "edit" ? "EDIT" : "ADD"}</div>
     </header>
+    {confirmDelete && item ? <ProfileDialog title="Delete item" onClose={() => setConfirmDelete(false)} busy={saving}>
+      <div className={profileStyles.stack}>
+        <p>Delete “{item.name}” from your closet? This cannot be undone.</p>
+        <button type="button" className={profileStyles.danger} disabled={saving} onClick={() => void remove()}>Delete item</button>
+        <button type="button" className={profileStyles.secondary} disabled={saving} onClick={() => setConfirmDelete(false)}>Cancel</button>
+      </div>
+    </ProfileDialog> : null}
   </div>;
 }

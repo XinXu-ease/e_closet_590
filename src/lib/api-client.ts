@@ -13,3 +13,10 @@ export async function api<T>(path: string, body?: unknown, method = body === und
   if (!response.ok) throw new ApiError(data.error || "The request could not be completed. Please try again.", response.status);
   return data as T;
 }
+
+export async function upload<T>(path: string, form: FormData): Promise<T> {
+  const response = await fetch(path, { method: "POST", credentials: "same-origin", cache: "no-store", body: form, signal: AbortSignal.timeout(20_000) });
+  const data = await response.json();
+  if (!response.ok) throw new ApiError(data.error || "The upload could not be completed. Please try again.", response.status);
+  return data as T;
+}

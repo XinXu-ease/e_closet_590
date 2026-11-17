@@ -1,6 +1,6 @@
 export const AVATARS = ["cat", "closet", "pin"] as const;
 export type AvatarKey = typeof AVATARS[number];
-export type Profile = { id: string; displayName: string; avatarKey: AvatarKey; phone: string; email?: string; createdAt: string };
+export type Profile = { id: string; displayName: string; avatarKey: AvatarKey; avatarUrl?: string; setupComplete?: boolean; phone: string; email?: string; createdAt: string };
 export type AccountResponse = { profile: Profile | null; configured: boolean; supportEmail: string | null; phoneEnabled?: boolean };
 
 export function emailAddress(value: unknown): string {
