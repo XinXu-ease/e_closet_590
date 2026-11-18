@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { BottomNavigation } from "./BottomNavigation";
 import { CollagePageHeader } from "./CollagePageHeader";
+import { CollageGuideLines } from "./CollageGuideLines";
 import { useObjectUrl } from "@/hooks/useObjectUrl";
 import { useWardrobe } from "./AccountProvider";
 import { getDisplayImage, type ClothingItem, type Outfit, type OutfitPiece } from "@/lib/types";
@@ -50,6 +51,7 @@ export default function FigmaSavedOutfits() {
   </Link>;
 
   return <div data-layer="AUTO / Saved Outfits" className={styles.screen}>
+    <CollageGuideLines />
     <CollagePageHeader title="Saved Outfits" description="Tap a card to reopen it in Outfit Builder." />
 
     <label className={styles.search}>

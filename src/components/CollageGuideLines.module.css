@@ -1,0 +1,20 @@
+.lines {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.vertical {
+  position: absolute;
+  top: -1px;
+  left: 318px;
+  transform: rotate(90deg);
+  transform-origin: top left;
+}
+
+.horizontal {
+  position: absolute;
+  top: 95.7px;
+  left: -117px;
+}

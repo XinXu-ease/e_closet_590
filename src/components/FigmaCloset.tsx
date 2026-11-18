@@ -6,6 +6,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { BottomNavigation } from "./BottomNavigation";
 import { ClothingCard } from "./ClothingCard";
 import { CollagePageHeader } from "./CollagePageHeader";
+import { CollageGuideLines } from "./CollageGuideLines";
 import { useHorizontalDragScroll } from "@/hooks/useHorizontalDragScroll";
 import { useWardrobe } from "./AccountProvider";
 import { CLOTHING_CATEGORIES, type ClothingCategory } from "@/lib/types";
@@ -40,6 +41,7 @@ export default function FigmaCloset() {
   const hasFilters = search.trim().length > 0 || category !== "All";
 
   return <div data-layer="AUTO / Closet" className={styles.screen}>
+    <CollageGuideLines />
     <CollagePageHeader title="Closet" description="Everything you own, ready to style." />
 
     <label className={styles.search}>

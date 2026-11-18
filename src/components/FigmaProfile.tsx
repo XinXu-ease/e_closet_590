@@ -14,6 +14,7 @@ import { BottomNavigation } from "./BottomNavigation";
 import { AuthCodeForm } from "./AuthCodeForm";
 import { ProfileDialog } from "./ProfileDialog";
 import { SignInPrompt } from "./SignInPrompt";
+import { CollageGuideLines } from "./CollageGuideLines";
 import styles from "./FigmaProfile.module.css";
 
 type Panel = "account" | "login" | "information" | "settings" | "contact" | "logout" | "clear" | "import" | "guest-clothes" | "discard-guest" | "reauth-delete" | "delete" | "reauth-phone" | "phone";
@@ -105,8 +106,7 @@ export default function FigmaProfile({ initialPanel }: { initialPanel?: "login" 
 
   return <div data-layer="AUTO / Profile" data-node-id="137:790" className={styles.screen}>
     <img className={styles.background} src="/figma/saved-outfits-page-grid.png" alt="" />
-    <img className={styles.vertical} src="/figma/profile-line-vertical.svg" alt="" />
-    <img className={styles.horizontal} src="/figma/profile-line-horizontal.svg" alt="" />
+    <CollageGuideLines />
     <header className={styles.header}>
       <span className={styles.quote} aria-hidden="true"><img src="/figma/saved-outfits-header.png" alt="" /></span>
       <div className={styles.greeting}><h1 title={profile?.displayName || undefined}>{profile ? profile.displayName || "Your profile" : "Guest"}</h1></div>
