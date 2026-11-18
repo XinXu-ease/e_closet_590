@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { apiUrl } from "@/lib/api-client";
 import styles from "./FigmaOutfitDetail.module.css";
 
 type WeatherResult = {
@@ -48,7 +49,7 @@ export function OutfitWeather() {
         const latitude = coords.latitude.toFixed(2);
         const longitude = coords.longitude.toFixed(2);
         try {
-          const response = await fetch(`/api/weather?latitude=${latitude}&longitude=${longitude}`, {
+          const response = await fetch(apiUrl(`/api/weather?latitude=${latitude}&longitude=${longitude}`), {
             cache: "no-store",
             signal: controller.signal,
           });

@@ -1,15 +1,15 @@
 .screen { position: relative; width: min(402px, 100vw); height: 874px; overflow: hidden; background-color: #fff; background-image: linear-gradient(rgb(255 255 255 / 80%), rgb(255 255 255 / 80%)), url("/figma/background.png"); background-position: center, center; background-size: cover, cover; border: 2px solid #29241f; border-radius: 32px; }
-.header { position: absolute; top: 20px; right: 24px; left: 24px; padding: 5px 4px; }
+.header { position: absolute; top: calc(20px + var(--content-safe-area-top)); right: 24px; left: 24px; padding: 5px 4px; }
 .brand { color: #756e63; font-family: var(--font-family-primary); font-size: var(--font-size-ui); font-weight: var(--font-weight-bold); }
 .title { margin-top: 5px; color: #29241f; font-family: var(--font-family-primary); font-size: var(--font-size-display); font-weight: var(--font-weight-bold); line-height: 1; }
 .subtitle { margin-top: 6px; color: #756e63; font-family: var(--font-family-primary); font-size: var(--font-size-ui); }
 .weather { display: flex; flex-direction: column; align-items: flex-end; color: #756e63; font-size: var(--font-size-ui); line-height: 1.35; text-align: right; white-space: nowrap; }
 .weatherPrimary { color: #29241f; font-size: var(--font-size-ui); font-weight: var(--font-weight-bold); }
 .weatherMuted { color: #756e63; }
-.weatherSlot { position: absolute; top: 32px; right: 24px; z-index: 1; }
-.formFrame { position: absolute; top: 484px; right: 24px; bottom: 72px; left: 24px; display: flex; flex-direction: column; gap: 16px; padding-bottom: 20px; overflow-x: hidden; overflow-y: auto; scrollbar-width: none; }
+.weatherSlot { position: absolute; top: calc(32px + var(--content-safe-area-top)); right: 24px; z-index: 1; }
+.formFrame { position: absolute; top: calc(484px + var(--content-safe-area-top)); right: 24px; bottom: calc(72px + var(--safe-area-bottom)); left: 24px; display: flex; flex-direction: column; gap: 16px; padding-bottom: 20px; overflow-x: hidden; overflow-y: auto; scrollbar-width: none; }
 .formFrame::-webkit-scrollbar { display: none; }
-.canvas { composes: detailFrame from "./CollageFormFrame.module.css"; position: absolute; top: 124px; right: 24px; left: 24px; height: 330px; overflow: hidden; touch-action: none; }
+.canvas { composes: detailFrame from "./CollageFormFrame.module.css"; position: absolute; top: calc(124px + var(--content-safe-area-top)); right: 24px; left: 24px; height: 330px; overflow: hidden; touch-action: none; }
 .piece { width: 100%; height: 100%; object-fit: contain; user-select: none; pointer-events: none; }
 .selected { outline: 1.5px solid #29241f; outline-offset: 2px; }
 .nameField { composes: fieldLabel from "./CollageFormFrame.module.css"; display: flex; width: 100%; flex: 0 0 auto; flex-direction: column; gap: 8px; }

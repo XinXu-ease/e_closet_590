@@ -7,6 +7,8 @@ import Link from "next/link";
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { useObjectUrl } from "@/hooks/useObjectUrl";
+import { apiUrl } from "@/lib/api-client";
+import { Capacitor } from "@capacitor/core";
 import { useWardrobe } from "./AccountProvider";
 import { ProfileDialog } from "./ProfileDialog";
 import profileStyles from "./FigmaProfile.module.css";
@@ -24,6 +26,7 @@ type FigmaItemDetailProps = { mode: "add" | "edit"; itemId?: string };
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_PROCESSING_EDGE = 2000;
+const isNativeApp = Capacitor.isNativePlatform();
 
 async function prepareImageForRemoval(file: File) {
   const bitmap = await createImageBitmap(file);
@@ -124,7 +127,7 @@ export default function FigmaItemDetail({ mode, itemId }: FigmaItemDetailProps) 
       if (preparedImage.size > 4 * 1024 * 1024) throw new Error("This photo is still too large to process. Please choose a smaller image.");
       const body = new FormData();
       body.append("image", preparedImage);
-      const response = await fetch("/api/remove-background", {
+      const response = await fetch(apiUrl("/api/remove-background"), {
         method: "POST",
         body,
       });
@@ -149,23 +152,45 @@ export default function FigmaItemDetail({ mode, itemId }: FigmaItemDetailProps) 
     }
   };
 
-  const handleImage = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const selectImage = (file: File) => {
     if (!ACCEPTED_TYPES.includes(file.type)) {
       setError("Choose a JPEG, PNG, or WebP image.");
-      event.target.value = "";
       return;
     }
     if (file.size > MAX_FILE_SIZE) {
       setError("The image must be 10 MB or smaller.");
-      event.target.value = "";
       return;
     }
     setNewImage(file);
     setProcessedImage(undefined);
     setError("");
     void removeBackground(file);
+  };
+
+  const handleImage = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) selectImage(file);
+    event.target.value = "";
+  };
+
+  const chooseNativeImage = async () => {
+    try {
+      const { Camera, CameraResultType, CameraSource } = await import("@capacitor/camera");
+      const photo = await Camera.getPhoto({
+        quality: 90,
+        resultType: CameraResultType.Uri,
+        source: CameraSource.Prompt,
+        correctOrientation: true,
+      });
+      if (!photo.webPath) throw new Error("The selected photo could not be read.");
+      const response = await fetch(photo.webPath);
+      const blob = await response.blob();
+      selectImage(new File([blob], `clothing.${photo.format || "jpeg"}`, { type: blob.type || "image/jpeg" }));
+    } catch (nativeError) {
+      const message = nativeError instanceof Error ? nativeError.message : "Photo selection failed.";
+      // iOS reports cancellation as an error; it should not look like a failed save.
+      if (!/cancel/i.test(message)) setError(message);
+    }
   };
 
   const validate = () => {
@@ -234,7 +259,7 @@ export default function FigmaItemDetail({ mode, itemId }: FigmaItemDetailProps) 
     {isBlocked ? <div className={styles.notFound}>{loadError || "This clothing item no longer exists."}<br /><button type="button" onClick={() => router.push("/closet")}>Return to Closet</button></div> : null}
 
     {!isBlocked ? <form className={styles.form} onSubmit={(event) => { event.preventDefault(); void save(); }}>
-      <button type="button" data-layer={imageUrl ? "Image / Existing item" : "Image picker / Empty"} className={`${styles.imageButton} ${imageUrl ? styles.hasImage : ""}`} onClick={() => fileInputRef.current?.click()} disabled={saving}>
+      <button type="button" data-layer={imageUrl ? "Image / Existing item" : "Image picker / Empty"} className={`${styles.imageButton} ${imageUrl ? styles.hasImage : ""}`} onClick={() => isNativeApp ? void chooseNativeImage() : fileInputRef.current?.click()} disabled={saving}>
         {imageUrl ? <img src={imageUrl} alt="Selected clothing" /> : <>
           <span className={styles.uploadIcon} aria-hidden="true"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M14 6v16M6 14h16" stroke="#29241F" strokeWidth="2" strokeLinecap="round" /></svg></span>
           <span className={styles.uploadPrompt}>Tap to choose a photo</span>

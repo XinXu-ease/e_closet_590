@@ -9,6 +9,7 @@ import { CollagePageHeader } from "./CollagePageHeader";
 import { useObjectUrl } from "@/hooks/useObjectUrl";
 import { useWardrobe } from "./AccountProvider";
 import { getDisplayImage, type ClothingItem, type Outfit, type OutfitPiece } from "@/lib/types";
+import { routes } from "@/lib/routes";
 import styles from "./FigmaSavedOutfits.module.css";
 
 function PreviewPiece({ piece, item }: { piece: OutfitPiece; item: ClothingItem }) {
@@ -38,7 +39,7 @@ export default function FigmaSavedOutfits() {
       !query || outfit.name.toLocaleLowerCase().includes(query),
     );
   }, [outfits, search]);
-  const renderOutfit = (outfit: Outfit) => <Link key={outfit.id} href={`/outfits/${outfit.id}`} aria-label={`Open ${outfit.name}`} className={styles.card}>
+  const renderOutfit = (outfit: Outfit) => <Link key={outfit.id} href={routes.outfit(outfit.id)} aria-label={`Open ${outfit.name}`} className={styles.card}>
     <div className={styles.name}>{outfit.name}</div>
     <div className={styles.preview}>
       <div className={styles.composition}>{outfit.pieces.map((piece) => {

@@ -1,4 +1,8 @@
 :root {
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --content-safe-area-top: max(0px, calc(var(--safe-area-top) - 14px));
+  --nav-area-offset: 0px;
   --ink: #20211f;
   --font-family-primary: "Old Standard TT", Georgia, serif;
   --font-size-display: 30px;
@@ -66,7 +70,18 @@ button {
 @media (max-width: 440px) {
   .figma-page-stage {
     display: block;
-    min-height: 874px;
+    min-height: 100dvh;
     padding: 0;
   }
+
+  /* The Figma screens are 874px tall, while real iPhones vary. Let the
+     screen use the actual viewport so fixed bottom controls remain reachable. */
+  .figma-page-stage > [data-layer] {
+    width: 100vw !important;
+    min-height: 100dvh;
+    height: 100dvh !important;
+    border-radius: 0 !important;
+  }
+
+  :root { --nav-area-offset: 12px; }
 }

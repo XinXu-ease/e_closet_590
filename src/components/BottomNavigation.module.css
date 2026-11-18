@@ -1,4 +1,4 @@
-.navigation { position: absolute; right: -2px; bottom: 0; left: -2px; z-index: 20; display: grid; height: 75px; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding: 12px 25px; background: #fff; border: 1px solid #a9c6f2; }
+.navigation { position: absolute; right: -2px; bottom: calc(0px - var(--nav-area-offset)); left: -2px; z-index: 20; display: grid; height: calc(75px + var(--safe-area-bottom)); grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding: 12px 25px calc(12px + var(--safe-area-bottom) - var(--nav-area-offset)); background: #fff; border: 1px solid #a9c6f2; }
 .item { position: relative; display: flex; min-width: 0; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; color: #5b5200; font-family: var(--font-family-primary); text-align: center; transform: translateY(-3px); }
 .item::before { position: absolute; inset: 0; z-index: 0; background-image: url("/figma/nav-paper-grid.png"); background-position: 51% 45%; background-size: 268.2% 767.98%; content: ""; opacity: 0; }
 .item, .item::before { transition: background-color 160ms ease, opacity 160ms ease, box-shadow 160ms ease; }

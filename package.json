@@ -2,35 +2,47 @@
   "name": "ewardrobe-mobile",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "npm@11.19.1",
+  "engines": {
+    "node": ">=24 <25",
+    "npm": ">=11 <12"
+  },
+  "workspaces": [
+    "apps/mobile"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "test": "tsx --test tests/*.test.ts",
-    "test:browser": "playwright test"
+    "test:browser": "playwright test",
+    "prepare:mobile-assets": "node scripts/prepare-mobile-assets.mjs",
+    "mobile:build": "npm run prepare:mobile-assets && npm run build --workspace @ecloset/mobile",
+    "ios:add": "npm run cap:add-ios --workspace @ecloset/mobile",
+    "ios:sync": "npm run cap:sync --workspace @ecloset/mobile"
   },
   "dependencies": {
-    "@fontsource/inter": "^5.3.0",
-    "@fontsource/old-standard-tt": "^5.3.0",
+    "@fontsource/inter": "5.3.0",
+    "@fontsource/old-standard-tt": "5.3.0",
     "@supabase/supabase-js": "2.119.0",
-    "dexie": "^4.4.6",
-    "dexie-react-hooks": "^4.4.0",
+    "dexie": "4.4.6",
+    "dexie-react-hooks": "4.4.0",
     "fflate": "0.8.3",
-    "next": "latest",
-    "react": "latest",
-    "react-dom": "latest",
-    "react-rnd": "^10.5.3"
+    "next": "16.3.5",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-rnd": "10.5.3"
   },
   "devDependencies": {
     "@playwright/test": "1.65.0",
-    "@types/node": "latest",
-    "@types/react": "latest",
-    "@types/react-dom": "latest",
-    "eslint": "latest",
-    "eslint-config-next": "latest",
+    "@types/node": "25.5.0",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.3.5",
     "fake-indexeddb": "6.2.8",
     "tsx": "4.23.15",
-    "typescript": "latest"
+    "typescript": "6.0.3"
   }
 }

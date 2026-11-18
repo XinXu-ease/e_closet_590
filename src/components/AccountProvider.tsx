@@ -32,6 +32,21 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem("e-closet-deleted-owner");
       }
       const local = await localAccount();
+      // The statically exported iOS bundle must never wait on a web account
+      // request at launch. Account authentication will be added once the API
+      // supports Bearer tokens and refresh-token storage in the native shell.
+      if (process.env.NEXT_PUBLIC_ECLOSET_TARGET === "mobile") {
+        const guest = await activateProfile(null);
+        if (request === sequence.current) {
+          setAccount(guest);
+          setConfigured(false);
+          setPhoneEnabled(false);
+          setSupportEmail(null);
+          setOffline(!navigator.onLine);
+          setError("");
+        }
+        return;
+      }
       let response: AccountResponse;
       try { response = await api<AccountResponse>("/api/me"); }
       catch (error) {

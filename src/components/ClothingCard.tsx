@@ -4,6 +4,7 @@
 import Link from "next/link";
 import { useObjectUrl } from "@/hooks/useObjectUrl";
 import { getDisplayImage, type ClothingItem } from "@/lib/types";
+import { routes } from "@/lib/routes";
 import styles from "./ClothingCard.module.css";
 
 type ClothingCardProps = {
@@ -41,7 +42,7 @@ export function ClothingCard({ item, onClick }: ClothingCardProps) {
   }
 
   return (
-    <Link className={styles.card} href={`/items/${item.id}`}>
+    <Link className={styles.card} href={routes.item(item.id)}>
       {content}
     </Link>
   );

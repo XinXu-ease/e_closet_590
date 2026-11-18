@@ -1,6 +1,8 @@
 node_modules/
 .next/
 out/
+apps/mobile/out/
+apps/mobile/public/figma/
 .env
 .env.local
 .env.*.local
