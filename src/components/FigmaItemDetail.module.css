@@ -193,37 +193,6 @@
   font-family: "Old Standard TT", Georgia, serif;
 }
 
-.tags {
-  display: flex;
-  height: 38px;
-  align-items: center;
-  gap: 12px;
-}
-
-.tagLabel {
-  position: relative;
-  display: block;
-  width: 36px;
-  height: 38px;
-  cursor: pointer;
-}
-
-.tagInput {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-}
-
-.tapeImage {
-  display: block;
-  width: 36px;
-  height: 38px;
-}
-
-.tapeImage img { display: block; width: 36px; height: 38px; object-fit: cover; }
-.tagInput:checked + .tapeImage { filter: drop-shadow(-3px 3px 0 #29241f); }
-
 .status {
   position: absolute;
   top: 642px;

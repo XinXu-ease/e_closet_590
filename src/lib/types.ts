@@ -9,17 +9,16 @@ export const CLOTHING_CATEGORIES = [
 
 export type ClothingCategory = (typeof CLOTHING_CATEGORIES)[number];
 
-export const COLOR_TAGS = {
-  red: "#DD6C66",
-  rose: "#EDC2B8",
-  sand: "#E8CFA8",
-  lime: "#EBF521",
-  green: "#AAD9AC",
-  blue: "#A9C6F2",
-  purple: "#A99BE8",
-} as const;
+export const TAPE_COLORS = [
+  "yellow",
+  "red",
+  "blue",
+  "purple",
+  "orange",
+  "green",
+] as const;
 
-export type ColorTagId = keyof typeof COLOR_TAGS;
+export type ColorTagId = (typeof TAPE_COLORS)[number];
 
 export type ClothingItem = {
   id: string;

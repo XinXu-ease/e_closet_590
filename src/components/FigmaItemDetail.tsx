@@ -7,6 +7,8 @@ import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { useObjectUrl } from "@/hooks/useObjectUrl";
 import { db, deleteClothingItemCascade } from "@/lib/db";
+import { createId } from "@/lib/id";
+import { TapeSelector } from "./TapeSelector";
 import {
   CLOTHING_CATEGORIES,
   getDisplayImage,
@@ -20,15 +22,6 @@ type FigmaItemDetailProps = { mode: "add" | "edit"; itemId?: string };
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_PROCESSING_EDGE = 2000;
-
-const TAPE_OPTIONS: Array<{ id: ColorTagId; image: string; label: string }> = [
-  { id: "lime", image: "/figma/tape-yellow.png", label: "Yellow tape" },
-  { id: "red", image: "/figma/tape-red.png", label: "Red tape" },
-  { id: "blue", image: "/figma/tape-blue.png", label: "Blue tape" },
-  { id: "purple", image: "/figma/tape-purple.png", label: "Purple tape" },
-  { id: "sand", image: "/figma/tape-orange.png", label: "Orange tape" },
-  { id: "green", image: "/figma/tape-green.png", label: "Green tape" },
-];
 
 async function prepareImageForRemoval(file: File) {
   const bitmap = await createImageBitmap(file);
@@ -192,7 +185,7 @@ export default function FigmaItemDetail({ mode, itemId }: FigmaItemDetailProps) 
       const now = Date.now();
       if (mode === "add") {
         await db.clothingItems.add({
-          id: crypto.randomUUID(),
+          id: createId(),
           name: name.trim(),
           category: category as ClothingCategory,
           colorTag: colorTag as ColorTagId,
@@ -257,12 +250,7 @@ export default function FigmaItemDetail({ mode, itemId }: FigmaItemDetailProps) 
         </label>
         <fieldset data-layer="Frame 9" className={styles.field} style={{ border: 0, padding: 0, margin: 0 }}>
           <legend>Tape</legend>
-          <div data-layer="Frame 10" className={styles.tags}>
-            {TAPE_OPTIONS.map(({ id, image, label }) => <label key={id} className={styles.tagLabel} aria-label={label}>
-              <input className={styles.tagInput} type="radio" name="color-tag" value={id} checked={colorTag === id} onChange={() => setColorTag(id)} disabled={saving} />
-              <span className={styles.tapeImage}><img src={image} alt="" /></span>
-            </label>)}
-          </div>
+          <TapeSelector value={colorTag} onChange={setColorTag} name="item-color-tag" disabled={saving} />
         </fieldset>
       </div>
       <div className={`${styles.status} ${error || processingError ? styles.error : ""}`} role="status">

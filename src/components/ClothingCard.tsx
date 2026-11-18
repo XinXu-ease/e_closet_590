@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { useObjectUrl } from "@/hooks/useObjectUrl";
-import { COLOR_TAGS, getDisplayImage, type ClothingItem } from "@/lib/types";
+import { getDisplayImage, type ClothingItem } from "@/lib/types";
 import styles from "./ClothingCard.module.css";
 
 type ClothingCardProps = {
@@ -18,14 +18,12 @@ export function ClothingCard({ item, onClick }: ClothingCardProps) {
       <span className={styles.preview}>
         {imageUrl ? <img src={imageUrl} alt="" /> : null}
       </span>
+      <span className={styles.tape} aria-label={`${item.colorTag} tape tag`}>
+        <img src={`/figma/tape-${item.colorTag}.png`} alt="" />
+      </span>
       <span className={styles.name}>{item.name}</span>
       <span className={styles.metadata}>
         <span className={styles.category}>{item.category}</span>
-        <span
-          className={styles.tag}
-          style={{ backgroundColor: COLOR_TAGS[item.colorTag] }}
-          aria-label={`${item.colorTag} color tag`}
-        />
       </span>
     </>
   );
