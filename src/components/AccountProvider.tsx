@@ -3,12 +3,13 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { activateProfile, db, localAccount, wardrobeFor, type LocalAccount } from "@/lib/db";
 import { api } from "@/lib/api-client";
+import { clearMobileSession, restoreMobileSession, saveMobileSession, type MobileSession } from "@/lib/mobile-session";
 import type { AccountResponse, Profile } from "@/lib/profile";
 
 type AccountContextValue = {
   ownerId: string; guestOwner: string; profile: Profile | null;
   configured: boolean; phoneEnabled: boolean; offline: boolean; supportEmail: string | null;
-  acceptProfile: (profile: Profile | null) => Promise<void>;
+  acceptProfile: (profile: Profile | null, session?: MobileSession) => Promise<void>;
   refresh: () => Promise<void>;
 };
 const AccountContext = createContext<AccountContextValue | null>(null);
@@ -32,9 +33,6 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem("e-closet-deleted-owner");
       }
       const local = await localAccount();
-      // The statically exported iOS bundle must never wait on a web account
-      // request at launch. Account authentication will be added once the API
-      // supports Bearer tokens and refresh-token storage in the native shell.
       if (process.env.NEXT_PUBLIC_ECLOSET_TARGET === "mobile") {
         const guest = await activateProfile(null);
         if (request === sequence.current) {
@@ -45,6 +43,25 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
           setOffline(!navigator.onLine);
           setError("");
         }
+        // Guest is visible immediately. The public account capability check and
+        // Keychain session recovery happen afterwards and never block launch.
+        void (async () => {
+          try {
+            const status = await api<AccountResponse>("/api/me");
+            if (request !== sequence.current) return;
+            setConfigured(status.configured);
+            setPhoneEnabled(status.phoneEnabled === true);
+            setSupportEmail(status.supportEmail);
+            setOffline(false);
+            const restored = await restoreMobileSession();
+            if (!restored || request !== sequence.current) return;
+            const next = await activateProfile(restored);
+            if (request === sequence.current) setAccount(next);
+          } catch (error) {
+            const networkFailure = error instanceof TypeError || (error instanceof DOMException && error.name === "AbortError");
+            if (request === sequence.current) setOffline(networkFailure);
+          }
+        })();
         return;
       }
       let response: AccountResponse;
@@ -68,8 +85,12 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
     } catch { setError("Your local storage could not be opened. Allow site storage, then try again. Your data has not been cleared."); }
   }, []);
 
-  const acceptProfile = useCallback(async (profile: Profile | null) => {
+  const acceptProfile = useCallback(async (profile: Profile | null, session?: MobileSession) => {
     ++sequence.current;
+    if (process.env.NEXT_PUBLIC_ECLOSET_TARGET === "mobile") {
+      if (session) await saveMobileSession(session);
+      else if (!profile) await clearMobileSession();
+    }
     const next = await activateProfile(profile);
     setAccount(next);
     setOffline(false);

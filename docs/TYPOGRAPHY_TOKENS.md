@@ -19,7 +19,7 @@ Typography has four text sizes:
 | --- | ---: |
 | `--font-size-display` | 30px |
 | `--font-size-title` | 24px |
-| `--font-size-body` | 14px |
+| `--font-size-body` | 16px |
 | `--font-size-ui` | 12px |
 
 Icons are not text tokens. Search uses `--icon-size-search` (20px), while the larger close, add, and collapse symbols use `--icon-size-control` (24px).
@@ -30,8 +30,8 @@ Icons are not text tokens. Search uses `--icon-size-search` (20px), while the la
 | --- | ---: | ---: | --- | --- |
 | Page title | 30px | 700 | Ink | Top-level page heading |
 | Detail or dialog title | 24px | 700 | Ink | Item detail, modal title, primary statistics |
-| Body | 14px | 400 | Ink | Form values, dialog copy, profile rows |
-| Body emphasis / button | 14px | 700 | Ink | Field labels, primary actions, emphasized content |
+| Body | 16px | 400 | Ink | Form values, dialog copy, profile rows |
+| Body emphasis / button | 16px | 700 | Ink | Field labels, primary actions, emphasized content |
 | Secondary text | 12px | 400 | Muted | Subtitles, helper copy, metadata, status text |
 | UI label | 12px | 400 / 700 | Olive / Ink | Tabs, navigation, badges; use 700 with Ink when active |
 

@@ -1,10 +1,10 @@
-import { authClient, currentSession, HttpError, json, readProfile, route } from "@/lib/auth/server";
+import { authClient, currentSession, HttpError, json, mobileOptions, readProfile, route } from "@/lib/auth/server";
 
 const MAX_AVATAR_BYTES = 512 * 1024;
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
-export const GET = route(async () => {
-  const { user } = await currentSession();
+export const GET = route(async (request) => {
+  const { user } = await currentSession(request);
   const storage = authClient(true).storage.from("profile-avatars");
   const { data, error } = await storage.download(`${user.id}/avatar.jpg`);
   if (error || !data) throw new HttpError(404, "Your avatar is not available.");
@@ -12,7 +12,7 @@ export const GET = route(async () => {
 });
 
 export const POST = route(async (request) => {
-  const { user } = await currentSession();
+  const { user } = await currentSession(request);
   const length = Number(request.headers.get("content-length") ?? "0");
   if (!Number.isFinite(length) || length > MAX_AVATAR_BYTES + 2048) throw new HttpError(413, "Choose a smaller avatar image.");
   let form: FormData;
@@ -26,3 +26,5 @@ export const POST = route(async (request) => {
   if (profileError) throw new HttpError(503, "Your avatar could not be saved. Please try again.");
   return json({ profile: await readProfile(user) });
 });
+
+export const OPTIONS = mobileOptions;

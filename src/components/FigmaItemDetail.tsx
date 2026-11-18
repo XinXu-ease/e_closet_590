@@ -25,29 +25,36 @@ type FigmaItemDetailProps = { mode: "add" | "edit"; itemId?: string };
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
-const MAX_PROCESSING_EDGE = 2000;
+const MAX_PREPARED_FILE_SIZE = 3.5 * 1024 * 1024;
+const PREPARATION_STEPS = [
+  { edge: 2000, quality: 0.84 },
+  { edge: 1600, quality: 0.78 },
+  { edge: 1280, quality: 0.72 },
+  { edge: 1024, quality: 0.66 },
+  { edge: 800, quality: 0.6 },
+];
 const isNativeApp = Capacitor.isNativePlatform();
 
 async function prepareImageForRemoval(file: File) {
   const bitmap = await createImageBitmap(file);
   try {
-    const scale = Math.min(1, MAX_PROCESSING_EDGE / Math.max(bitmap.width, bitmap.height));
-    const width = Math.max(1, Math.round(bitmap.width * scale));
-    const height = Math.max(1, Math.round(bitmap.height * scale));
-    const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = height;
-    const context = canvas.getContext("2d");
-    if (!context) throw new Error("Image canvas is unavailable.");
-    context.drawImage(bitmap, 0, 0, width, height);
-
-    const blob = await new Promise<Blob | null>((resolve) => {
-      canvas.toBlob(resolve, "image/webp", 0.88);
-    });
-    if (!blob) throw new Error("The image could not be prepared.");
-    return new File([blob], `${file.name.replace(/\.[^.]+$/, "") || "clothing"}.webp`, {
-      type: "image/webp",
-    });
+    for (const { edge, quality } of PREPARATION_STEPS) {
+      const scale = Math.min(1, edge / Math.max(bitmap.width, bitmap.height));
+      const width = Math.max(1, Math.round(bitmap.width * scale));
+      const height = Math.max(1, Math.round(bitmap.height * scale));
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("Image canvas is unavailable.");
+      context.drawImage(bitmap, 0, 0, width, height);
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", quality));
+      if (!blob) throw new Error("The image could not be prepared.");
+      if (blob.size <= MAX_PREPARED_FILE_SIZE) {
+        return new File([blob], `${file.name.replace(/\.[^.]+$/, "") || "clothing"}.webp`, { type: "image/webp" });
+      }
+    }
+    throw new Error("This photo could not be compressed enough for background removal.");
   } finally {
     bitmap.close();
   }
@@ -85,11 +92,13 @@ export default function FigmaItemDetail({ mode, itemId }: FigmaItemDetailProps) 
   const [initializedId, setInitializedId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [category, setCategory] = useState<ClothingCategory | "">("");
+  const [categoryPickerOpen, setCategoryPickerOpen] = useState(false);
   const [colorTag, setColorTag] = useState<ColorTagId | "">("");
   const [newImage, setNewImage] = useState<File>();
   const [processedImage, setProcessedImage] = useState<Blob>();
   const [processing, setProcessing] = useState(false);
   const [processingError, setProcessingError] = useState("");
+  const [saveOriginalImage, setSaveOriginalImage] = useState(false);
   const processingRequest = useRef(0);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -114,8 +123,8 @@ export default function FigmaItemDetail({ mode, itemId }: FigmaItemDetailProps) 
   const isMissing = mode === "edit" && itemId && itemQuery !== undefined && !loadError && item === null;
   const isUnavailable = mode === "edit" && Boolean(loadError);
   const isBlocked = Boolean(isMissing || isUnavailable);
-  const newImageNeedsProcessing = Boolean(newImage && !processedImage);
-  const isAddInvalid = mode === "add" && (!newImage || !processedImage || !name.trim() || !category || !colorTag);
+  const newImageNeedsProcessing = Boolean(newImage && !processedImage && !saveOriginalImage);
+  const isAddInvalid = mode === "add" && (!newImage || newImageNeedsProcessing || !name.trim() || !category || !colorTag);
 
   const removeBackground = async (file: File) => {
     const requestId = ++processingRequest.current;
@@ -124,7 +133,6 @@ export default function FigmaItemDetail({ mode, itemId }: FigmaItemDetailProps) 
     setProcessedImage(undefined);
     try {
       const preparedImage = await prepareImageForRemoval(file);
-      if (preparedImage.size > 4 * 1024 * 1024) throw new Error("This photo is still too large to process. Please choose a smaller image.");
       const body = new FormData();
       body.append("image", preparedImage);
       const response = await fetch(apiUrl("/api/remove-background"), {
@@ -163,6 +171,7 @@ export default function FigmaItemDetail({ mode, itemId }: FigmaItemDetailProps) 
     }
     setNewImage(file);
     setProcessedImage(undefined);
+    setSaveOriginalImage(false);
     setError("");
     void removeBackground(file);
   };
@@ -220,7 +229,7 @@ export default function FigmaItemDetail({ mode, itemId }: FigmaItemDetailProps) 
           category: category as ClothingCategory,
           colorTag: colorTag as ColorTagId,
           originalImage: newImage as Blob,
-          processedImage: processedImage as Blob,
+          processedImage: saveOriginalImage ? undefined : processedImage,
           createdAt: now,
           updatedAt: now,
         }, true);
@@ -231,7 +240,7 @@ export default function FigmaItemDetail({ mode, itemId }: FigmaItemDetailProps) 
           category: category as ClothingCategory,
           colorTag: colorTag as ColorTagId,
           originalImage: newImage ?? item.originalImage,
-          processedImage: newImage ? processedImage : item.processedImage,
+          processedImage: newImage ? (saveOriginalImage ? undefined : processedImage) : item.processedImage,
           updatedAt: now,
         });
       }
@@ -273,20 +282,18 @@ export default function FigmaItemDetail({ mode, itemId }: FigmaItemDetailProps) 
           <label data-layer="Frame 7" className={styles.field}>Name
             <input data-layer="Field / Name" className={styles.control} value={name} maxLength={60} placeholder="Item name" onChange={(event) => setName(event.target.value)} disabled={saving} />
           </label>
-          <label data-layer="Frame 8" className={styles.field}>Category
-            <select data-layer="Field / Category" className={styles.control} value={category} onChange={(event) => setCategory(event.target.value as ClothingCategory | "")} disabled={saving} required>
-              <option value="" disabled>Choose a category</option>
-              {CLOTHING_CATEGORIES.map((option) => <option key={option} value={option}>{option}</option>)}
-            </select>
-          </label>
+          <div data-layer="Frame 8" className={styles.field} role="group" aria-labelledby="item-category-label">
+            <span id="item-category-label">Category</span>
+            <button type="button" data-layer="Field / Category" className={styles.control} aria-haspopup="dialog" aria-expanded={categoryPickerOpen} onClick={() => setCategoryPickerOpen(true)} disabled={saving}>{category || "Choose a category"}</button>
+          </div>
           <fieldset data-layer="Frame 9" className={styles.field} style={{ border: 0, padding: 0, margin: 0 }}>
             <legend>Tape</legend>
             <TapeSelector value={colorTag} onChange={setColorTag} name="item-color-tag" disabled={saving} />
           </fieldset>
         </div>
         <div className={`${styles.status} ${error || processingError ? styles.error : ""}`} role="status">
-          {isLoading ? "Loading item…" : error || processingError || (processing ? "Removing background…" : processedImage && newImage ? "Background removed." : saving ? "Saving…" : "")}
-          {processingError && newImage ? <button type="button" className={styles.retry} onClick={() => void removeBackground(newImage)} disabled={processing}>Retry</button> : null}
+        {isLoading ? "Loading item…" : error || (processing ? "Removing background…" : saveOriginalImage && newImage ? "Original photo will be saved without background removal." : processingError || (processedImage && newImage ? "Background removed." : saving ? "Saving…" : ""))}
+          {processingError && newImage && !saveOriginalImage ? <><button type="button" className={styles.retry} onClick={() => void removeBackground(newImage)} disabled={processing}>Retry</button><button type="button" className={styles.retry} onClick={() => setSaveOriginalImage(true)} disabled={processing}>Save original photo</button></> : null}
         </div>
       </div>
     </form> : null}
@@ -306,6 +313,11 @@ export default function FigmaItemDetail({ mode, itemId }: FigmaItemDetailProps) 
         <p>Delete “{item.name}” from your closet? This cannot be undone.</p>
         <button type="button" className={profileStyles.danger} disabled={saving} onClick={() => void remove()}>Delete item</button>
         <button type="button" className={profileStyles.secondary} disabled={saving} onClick={() => setConfirmDelete(false)}>Cancel</button>
+      </div>
+    </ProfileDialog> : null}
+    {categoryPickerOpen ? <ProfileDialog title="Choose a category" onClose={() => setCategoryPickerOpen(false)} busy={saving}>
+      <div className={profileStyles.stack} role="listbox" aria-label="Clothing category">
+        {CLOTHING_CATEGORIES.map((option) => <button key={option} type="button" role="option" aria-selected={category === option} className={category === option ? profileStyles.primary : profileStyles.secondary} onClick={() => { setCategory(option); setCategoryPickerOpen(false); }} disabled={saving}>{option}</button>)}
       </div>
     </ProfileDialog> : null}
   </div>;

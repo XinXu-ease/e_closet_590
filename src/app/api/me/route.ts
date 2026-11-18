@@ -1,12 +1,12 @@
-import { authClient, clearSessionCookies, configured, phoneEnabled, currentSession, HttpError, json, readProfile, requestBody, requireRecent, route } from "@/lib/auth/server";
+import { authClient, clearSessionCookies, configured, phoneEnabled, currentSession, HttpError, json, mobileOptions, readProfile, requestBody, requireRecent, route } from "@/lib/auth/server";
 import { profileInput } from "@/lib/profile";
 
-export const GET = route(async () => {
+export const GET = route(async (request) => {
   const support = process.env.SUPPORT_EMAIL ?? "";
   const supportEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(support) ? support : null;
   if (!configured()) return json({ profile: null, configured: false, supportEmail, phoneEnabled: phoneEnabled() });
   try {
-    const { user } = await currentSession();
+    const { user } = await currentSession(request);
     return json({ profile: await readProfile(user), configured: true, supportEmail, phoneEnabled: phoneEnabled() });
   } catch (error) {
     if (error instanceof HttpError && error.status === 401) return json({ profile: null, configured: true, supportEmail, phoneEnabled: phoneEnabled() });
@@ -15,7 +15,7 @@ export const GET = route(async () => {
 });
 
 export const PATCH = route(async (request) => {
-  const { user } = await currentSession();
+  const { user } = await currentSession(request);
   const body = await requestBody(request);
   let input;
   try { input = profileInput(body); } catch (error) { throw new HttpError(400, (error as Error).message); }
@@ -44,3 +44,5 @@ export const DELETE = route(async () => {
   await clearSessionCookies();
   return json({ deleted: true });
 });
+
+export const OPTIONS = mobileOptions;

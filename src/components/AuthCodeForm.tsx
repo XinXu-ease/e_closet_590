@@ -3,9 +3,10 @@ import { useEffect, useState } from "react";
 import { api } from "@/lib/api-client";
 import { emailAddress, phoneNumber, type Profile } from "@/lib/profile";
 import { useAccount } from "./AccountProvider";
+import type { MobileSession } from "@/lib/mobile-session";
 import styles from "./FigmaProfile.module.css";
 
-export function AuthCodeForm({ purpose = "login", onComplete }: { purpose?: "login" | "reauthenticate" | "change"; onComplete: (profile: Profile) => Promise<void> | void }) {
+export function AuthCodeForm({ purpose = "login", onComplete }: { purpose?: "login" | "reauthenticate" | "change"; onComplete: (profile: Profile, session?: MobileSession) => Promise<void> | void }) {
   const { configured, offline, profile, phoneEnabled } = useAccount();
   const [selectedChannel, setSelectedChannel] = useState<"email" | "phone">("email");
   const channel = purpose === "change" ? "phone" : purpose === "reauthenticate" ? (profile?.email ? "email" : "phone") : selectedChannel;
@@ -35,8 +36,8 @@ export function AuthCodeForm({ purpose = "login", onComplete }: { purpose?: "log
     setError(""); setBusy(true);
     try {
       const path = purpose === "change" ? "/api/me/phone/verify" : "/api/auth/otp/verify";
-      const result = await api<{ profile: Profile }>(path, { [channel]: sentTo, channel, code, purpose });
-      await onComplete(result.profile);
+      const result = await api<{ profile: Profile; session?: MobileSession }>(path, { [channel]: sentTo, channel, code, purpose });
+      await onComplete(result.profile, result.session);
     } catch (error) { setError(error instanceof Error ? error.message : "The code could not be verified."); }
     finally { setBusy(false); }
   };

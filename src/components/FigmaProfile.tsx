@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "@/lib/db";
-import { api, upload } from "@/lib/api-client";
+import { api, apiBlob, upload } from "@/lib/api-client";
 import { type Profile } from "@/lib/profile";
 import { exportWardrobe, importWardrobe, inspectArchive, type WardrobeImport } from "@/lib/wardrobe-archive";
 import { finishLocalAccountDeletion, useAccount, useWardrobe } from "./AccountProvider";
@@ -30,6 +30,7 @@ export default function FigmaProfile({ initialPanel }: { initialPanel?: "login" 
   const [name, setName] = useState(profile?.displayName ?? "");
   const [avatarFile, setAvatarFile] = useState<File>();
   const [avatarPreview, setAvatarPreview] = useState<string>();
+  const [remoteAvatar, setRemoteAvatar] = useState<{ path: string; url: string }>();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -57,6 +58,18 @@ export default function FigmaProfile({ initialPanel }: { initialPanel?: "login" 
     });
     return () => { cancelled = true; };
   }, [guestOwner, panel, profile]);
+  useEffect(() => {
+    if (!profile?.avatarUrl) return;
+    const path = profile.avatarUrl;
+    let disposed = false;
+    let objectUrl: string | undefined;
+    void apiBlob(path).then((blob) => {
+      if (disposed) return;
+      objectUrl = URL.createObjectURL(blob);
+      setRemoteAvatar({ path, url: objectUrl });
+    }).catch(() => { /* Leave the preset avatar in place on an image error. */ });
+    return () => { disposed = true; if (objectUrl) URL.revokeObjectURL(objectUrl); };
+  }, [profile?.avatarUrl]);
   const close = () => { if (!deleted) { setPanel(null); setArchive(undefined); if (initialPanel) router.replace("/profile"); } };
   const run = async (action: () => Promise<void>) => {
     setError(""); setMessage(""); setBusy(true);
@@ -111,7 +124,7 @@ export default function FigmaProfile({ initialPanel }: { initialPanel?: "login" 
       <span className={styles.quote} aria-hidden="true"><img src="/figma/saved-outfits-header.png" alt="" /></span>
       <div className={styles.greeting}><h1 title={profile?.displayName || undefined}>{profile ? profile.displayName || "Your profile" : "Guest"}</h1></div>
     </header>
-    <button className={styles.avatar} aria-label={profile ? "Edit your avatar" : "Log in to edit your avatar"} onClick={() => open("information")}><img src={profile?.avatarUrl ?? DEFAULT_AVATAR} alt="Your profile avatar" /></button>
+    <button className={styles.avatar} aria-label={profile ? "Edit your avatar" : "Log in to edit your avatar"} onClick={() => open("information")}><img src={profile?.avatarUrl && remoteAvatar?.path === profile.avatarUrl ? remoteAvatar.url : DEFAULT_AVATAR} alt="Your profile avatar" /></button>
     <div className={styles.statistics} aria-label="Local closet totals">
       <Link href="/closet" className={styles.stat} aria-label={`${stats?.items ?? 0} clothing items`}><span className={styles.number}>{stats ? stats.items : "—"}<span className={styles.slash}><img src="/figma/profile-count-clothing.svg" alt="" /></span></span><strong>Clothing</strong></Link>
       <Link href="/outfits" className={styles.stat} aria-label={`${stats?.outfits ?? 0} saved outfits`}><span className={styles.number}>{stats ? stats.outfits : "—"}<span className={styles.slash}><img src="/figma/profile-count-outfits.svg" alt="" /></span></span><strong>Outfits</strong></Link>

@@ -4,11 +4,29 @@ const ACCEPTED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
+const CAPACITOR_ORIGIN = "capacitor://localhost";
 
-function jsonError(message: string, status: number) {
+function cors(request: Request, headers: HeadersInit = {}) {
+  const next = new Headers(headers);
+  if (request.headers.get("origin") === CAPACITOR_ORIGIN) {
+    next.set("Access-Control-Allow-Origin", CAPACITOR_ORIGIN);
+    next.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+    next.set("Access-Control-Allow-Headers", "Content-Type");
+    next.set("Vary", "Origin");
+  }
+  return next;
+}
+
+export function OPTIONS(request: Request) {
+  return request.headers.get("origin") === CAPACITOR_ORIGIN
+    ? new Response(null, { status: 204, headers: cors(request) })
+    : new Response(null, { status: 403 });
+}
+
+function jsonError(request: Request, message: string, status: number) {
   return Response.json(
     { error: message },
-    { status, headers: { "Cache-Control": "no-store" } },
+    { status, headers: cors(request, { "Cache-Control": "no-store" }) },
   );
 }
 
@@ -51,32 +69,32 @@ export async function POST(request: Request) {
   const apiKey = process.env.REMOVE_BG_API_KEY?.trim();
   if (!apiKey) {
     return jsonError(
-      "Background removal is not configured. Add REMOVE_BG_API_KEY to the server environment.",
+      request, "Background removal is not configured. Add REMOVE_BG_API_KEY to the server environment.",
       503,
     );
   }
 
   const requestLength = Number(request.headers.get("content-length") || 0);
   if (requestLength > MAX_PROXY_FILE_SIZE + 128 * 1024) {
-    return jsonError("The prepared image is too large to process.", 413);
+    return jsonError(request, "The prepared image is too large to process.", 413);
   }
 
   let formData: FormData;
   try {
     formData = await request.formData();
   } catch {
-    return jsonError("The upload could not be read.", 400);
+    return jsonError(request, "The upload could not be read.", 400);
   }
 
   const image = formData.get("image");
   if (!(image instanceof File)) {
-    return jsonError("An image file is required.", 400);
+    return jsonError(request, "An image file is required.", 400);
   }
   if (!ACCEPTED_IMAGE_TYPES.has(image.type)) {
-    return jsonError("Only JPEG, PNG, and WebP images are supported.", 415);
+    return jsonError(request, "Only JPEG, PNG, and WebP images are supported.", 415);
   }
   if (image.size > MAX_PROXY_FILE_SIZE) {
-    return jsonError("The prepared image is too large to process.", 413);
+    return jsonError(request, "The prepared image is too large to process.", 413);
   }
 
   const providerBody = new FormData();
@@ -97,31 +115,31 @@ export async function POST(request: Request) {
     });
 
     if (!response.ok) {
-      return jsonError(await providerError(response), response.status);
+      return jsonError(request, await providerError(response), response.status);
     }
 
     const contentType = response.headers.get("content-type") || "image/webp";
     if (!contentType.startsWith("image/")) {
-      return jsonError("The background-removal service returned an invalid result.", 502);
+      return jsonError(request, "The background-removal service returned an invalid result.", 502);
     }
 
     const result = await response.arrayBuffer();
     if (result.byteLength > MAX_PROXY_FILE_SIZE) {
-      return jsonError("The processed image is too large to return.", 502);
+      return jsonError(request, "The processed image is too large to return.", 502);
     }
 
     return new Response(result, {
       status: 200,
-      headers: {
+      headers: cors(request, {
         "Content-Type": contentType,
         "Cache-Control": "no-store",
-      },
+      }),
     });
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {
-      return jsonError("Background removal timed out. Try again.", 504);
+      return jsonError(request, "Background removal timed out. Try again.", 504);
     }
-    return jsonError(connectionError(error), 502);
+    return jsonError(request, connectionError(error), 502);
   } finally {
     clearTimeout(timeout);
   }

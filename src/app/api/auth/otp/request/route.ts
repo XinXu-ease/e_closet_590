@@ -1,10 +1,10 @@
-import { authClient, currentSession, HttpError, json, phoneEnabled, rateLimit, requestBody, route } from "@/lib/auth/server";
+import { authClient, currentSession, HttpError, json, mobileOptions, phoneEnabled, rateLimit, requestBody, route } from "@/lib/auth/server";
 import { otpIdentity } from "@/lib/auth/identity";
 import { sendCodeError } from "@/lib/auth/send-error";
 
 export const POST = route(async (request) => {
   const body = await requestBody(request);
-  const current = body.purpose === "reauthenticate" ? await currentSession() : null;
+  const current = body.purpose === "reauthenticate" ? await currentSession(request) : null;
   let identity;
   try { identity = otpIdentity(body, current?.user ?? null, phoneEnabled()); }
   catch (error) { throw new HttpError(400, (error as Error).message); }
@@ -22,3 +22,5 @@ export const POST = route(async (request) => {
   }
   return json({ sent: true, retryAfter: 60 });
 });
+
+export const OPTIONS = mobileOptions;

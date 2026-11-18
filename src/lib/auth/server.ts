@@ -11,6 +11,29 @@ const ACCESS = "ec-access";
 const REFRESH = "ec-refresh";
 const RECENT = "ec-recent";
 const cookieOptions = { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax" as const, path: "/" };
+const CAPACITOR_ORIGIN = "capacitor://localhost";
+
+export function isMobileRequest(request: Request) {
+  return request.headers.get("origin") === CAPACITOR_ORIGIN;
+}
+
+function mobileCorsHeaders(request: Request): Record<string, string> {
+  return isMobileRequest(request)
+    ? {
+      "Access-Control-Allow-Origin": CAPACITOR_ORIGIN,
+      "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "Authorization, Content-Type",
+      "Access-Control-Max-Age": "600",
+      Vary: "Origin",
+    }
+    : {};
+}
+
+/** Handles the native shell's narrowly-scoped CORS preflight. */
+export function mobileOptions(request: Request) {
+  if (!isMobileRequest(request)) return new Response(null, { status: 403 });
+  return new Response(null, { status: 204, headers: mobileCorsHeaders(request) });
+}
 
 export function phoneEnabled() { return process.env.AUTH_PHONE_ENABLED === "true"; }
 export function configured() {
@@ -32,7 +55,20 @@ export async function clearSessionCookies() {
   const jar = await cookies();
   for (const key of [ACCESS, REFRESH, RECENT]) jar.set(key, "", { ...cookieOptions, maxAge: 0 });
 }
-export async function currentSession() {
+export async function currentSession(request?: Request) {
+  const bearer = request?.headers.get("authorization")?.match(/^Bearer\s+(.+)$/i)?.[1];
+  if (bearer) {
+    if (!request || !isMobileRequest(request)) throw new HttpError(403, "This request must come from this app.");
+    const client = authClient();
+    const verified = await client.auth.getUser(bearer);
+    if (verified.error || !verified.data.user) {
+      if (verified.error && (!verified.error.status || verified.error.status >= 500)) throw new HttpError(503, "Account service is temporarily unavailable.");
+      throw new HttpError(401, "Your session expired. Please sign in again.");
+    }
+    // The native shell owns the refresh token in Keychain. Routes that require
+    // recent reauthentication still use the cookie-only web flow.
+    return { client, user: verified.data.user, session: { access_token: bearer, refresh_token: "", user: verified.data.user } as Session };
+  }
   const jar = await cookies();
   const access = jar.get(ACCESS)?.value;
   const refresh = jar.get(REFRESH)?.value;
@@ -121,12 +157,20 @@ export function route(handler: (request: Request) => Promise<Response>) {
         // Compare the browser Origin against the actual incoming Host instead.
         let origin: URL | undefined;
         try { origin = new URL(request.headers.get("origin") ?? ""); } catch { /* rejected below */ }
-        if (!origin || !["http:", "https:"].includes(origin.protocol) || origin.host !== request.headers.get("host") || request.headers.get("sec-fetch-site") === "cross-site") throw new HttpError(403, "This request must come from this app.");
+        const sameWebApp = origin && ["http:", "https:"].includes(origin.protocol) && origin.host === request.headers.get("host") && request.headers.get("sec-fetch-site") !== "cross-site";
+        if (!sameWebApp && !isMobileRequest(request)) throw new HttpError(403, "This request must come from this app.");
       }
-      return await handler(request);
+      const response = await handler(request);
+      const headers = new Headers(response.headers);
+      for (const [key, value] of Object.entries(mobileCorsHeaders(request))) headers.set(key, value);
+      return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
     } catch (error) {
-      if (error instanceof HttpError) return json({ error: error.message }, error.status);
-      return json({ error: "The account service could not complete this request. Please try again." }, 503);
+      const response = error instanceof HttpError
+        ? json({ error: error.message }, error.status)
+        : json({ error: "The account service could not complete this request. Please try again." }, 503);
+      const headers = new Headers(response.headers);
+      for (const [key, value] of Object.entries(mobileCorsHeaders(request))) headers.set(key, value);
+      return new Response(response.body, { status: response.status, headers });
     }
   };
 }

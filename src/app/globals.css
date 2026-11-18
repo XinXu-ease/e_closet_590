@@ -7,7 +7,7 @@
   --font-family-primary: "Old Standard TT", Georgia, serif;
   --font-size-display: 30px;
   --font-size-title: 24px;
-  --font-size-body: 14px;
+  --font-size-body: 16px;
   --font-size-ui: 12px;
   --font-weight-regular: 400;
   --font-weight-bold: 700;
@@ -68,6 +68,14 @@ button {
 /* Components inherit the single project typeface and use the tokens above. */
 
 @media (max-width: 440px) {
+  /* iOS WebKit zooms focused editable controls below 16px. Keep the
+     typography scale intact elsewhere and only adjust interactive fields. */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
   .figma-page-stage {
     display: block;
     min-height: 100dvh;
