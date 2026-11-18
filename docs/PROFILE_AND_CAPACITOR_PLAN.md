@@ -1,4 +1,4 @@
-# E-Closet：Web Profile 与 Capacitor iOS 开发规划
+# 旧方案：E-Closet Web Profile 与 Capacitor iOS 开发规划
 
 更新时间：2026-11-17
 

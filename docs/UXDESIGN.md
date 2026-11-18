@@ -2,6 +2,8 @@
 
 更新时间：2026-09-29
 
+状态：核心 Closet、Item、Outfit 和 Saved Outfits 流程已实施；Profile 与 Settings 后续也已实施。本文保留为最初 Web MVP 的 UX 基线，其中“Profile、Settings 延后”的描述只代表当时阶段，不再代表当前仓库状态。
+
 ## 1. Product and Navigation
 
 E-Closet is a single-user, local-first wardrobe website. The complete MVP journey is:

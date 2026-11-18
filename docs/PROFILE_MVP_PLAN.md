@@ -1,6 +1,6 @@
 # Profile MVP 修改计划（临时版）
 
-状态：讨论确认中的开发计划，尚未实施。
+状态：已实施。本文保留为 Profile MVP 的需求与验收记录；后续移动端工作以 `IOS_LOCAL_DEVICE_MVP_PLAN.md` 为准。
 
 ## 目标与阶段划分
 
