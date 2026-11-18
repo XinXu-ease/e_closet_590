@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { BottomNavigation } from "./BottomNavigation";
 import { CollagePageHeader } from "./CollagePageHeader";
+import { CollageGuideLines } from "./CollageGuideLines";
 import { useObjectUrl } from "@/hooks/useObjectUrl";
 import { useWardrobe } from "./AccountProvider";
 import { getDisplayImage, type ClothingItem, type Outfit, type OutfitPiece } from "@/lib/types";
@@ -51,6 +52,7 @@ export default function FigmaSavedOutfits() {
   </Link>;
 
   return <div data-layer="AUTO / Saved Outfits" className={styles.screen}>
+    <CollageGuideLines />
     <CollagePageHeader title="Saved Outfits" description="Tap a card to reopen it in Outfit Builder." />
 
     <label className={styles.search}>
@@ -70,7 +72,6 @@ export default function FigmaSavedOutfits() {
           {filteredOutfits.filter((_, index) => index % 2 === 0).map(renderOutfit)}
         </div>
         {databaseError ? <p className={styles.state}>{databaseError}</p> : null}
-        {outfits?.length === 0 ? <p className={styles.state}>No saved outfits yet. <Link href="/outfits/new">Create your first outfit.</Link></p> : null}
         {outfits && outfits.length > 0 && filteredOutfits.length === 0 ? <p className={styles.state}>No outfits match this search.</p> : null}
       </div>
     </section>

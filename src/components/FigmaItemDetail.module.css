@@ -151,12 +151,19 @@
   display: none;
 }
 
-.fields {
+.details {
   position: absolute;
   top: calc(421px + var(--content-safe-area-top));
   left: 23px;
   display: flex;
   width: 354px;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.fields {
+  display: flex;
+  width: 100%;
   flex-direction: column;
   align-items: stretch;
   gap: 16px;
@@ -195,11 +202,9 @@
 }
 
 .status {
-  position: absolute;
-  top: calc(642px + var(--content-safe-area-top));
-  left: 26px;
-  width: 350px;
+  width: 100%;
   margin: 0;
+  padding-top: 8px;
   color: #756e63;
   font-size: var(--font-size-ui);
   line-height: 1.4;
