@@ -1,21 +1,21 @@
- > 2026-11-16 ????????????????????????????????????????????? WEB_PROFILE_SETUP.md ???
-
 # E-Closet：Web Profile 与 Capacitor iOS 开发规划
 
-更新时间：2026-11-11
+更新时间：2026-11-17
 
-状态：规划，尚未实施。本文中的新目录、接口、配置和命令用于后续开发，不代表仓库已具备相应功能。
+状态：长期总规划。Web Profile 与本地衣橱基础已经进入可用阶段；下一里程碑是 Capacitor iOS 本地真机 MVP。本文中的 App Store、原生正式存储和云端备份内容仍是后续方向，不代表仓库已全部具备。
+
+> 当前阶段（2026-11-17）：Web UI、邮箱验证码账户、Profile、本地 Dexie / IndexedDB 衣橱和 ZIP Import / Export 已具备；仓库尚未接入 Capacitor，也尚未生成 iOS 工程。下一步只先在自己的 iPhone 上完成本地构建和真机验收，暂不上架。独立执行计划见 [IOS_LOCAL_DEVICE_MVP_PLAN.md](./IOS_LOCAL_DEVICE_MVP_PLAN.md)。
 
 ## 已确认的方向
 
-- 衣物、搭配、衣橱图片只保存在用户本地，不建设衣橱云端数据库、图片云存储或自动同步。
+- MVP 的衣物、搭配和衣橱图片只保存在用户本地；云端手动备份与恢复延后到第二阶段。
 - 继续使用 Next.js、React、TypeScript 和 CSS Modules，尽量复用现有页面组件与搭配逻辑，不迁移到 Vite。
-- 第一阶段先让 Web 端 Profile、手机号注册登录和本地数据隔离正常运行。
-- 后端 API 继续部署在 Vercel；账户和最小个人资料保存在持久化的云端认证服务／数据库中。
+- Web 第一阶段已改为 Supabase 邮箱验证码注册／登录；手机号登录留作以后可选能力。
+- 后端 API 继续部署在 Vercel；账户、名字和头像保存在 Supabase 认证、数据库与私有 Storage 中。
 - 后续用 Capacitor 打包 iOS；Web 继续使用 IndexedDB，iOS 正式版采用 SQLite 与应用私有文件目录。
-- 同时考虑中国大陆和海外用户，手机号必须包含国家区号；两地验证码与网络体验都需要验收。
+- 当前只先完成 Mac + 自有 iPhone 的本地真机 MVP；TestFlight 和 App Store 另立阶段。
 
-这里的“手机号绑定”表示：一个已验证的手机号在同一账户系统中同一时间绑定一个账户。衣橱记录绑定稳定的 `user_id`，不直接绑定电话号码。重新登录能找到同一账户，但不能恢复已经从设备删除的衣橱。
+衣橱记录绑定稳定的 Supabase `user_id`，不直接绑定邮箱或未来可能加入的电话号码。重新登录能找到同一账户和该设备上的本地数据，但 MVP 不能恢复已经从设备删除的衣橱。
 
 本文规划新增能力；[TECH_STACK.md](./TECH_STACK.md) 和 [UXDESIGN.md](./UXDESIGN.md) 中的 MVP 描述仍用于说明已有实现。
 
