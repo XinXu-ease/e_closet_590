@@ -243,24 +243,26 @@ export default function FigmaItemDetail({ mode, itemId }: FigmaItemDetailProps) 
       </button>
       <input ref={fileInputRef} className={styles.hiddenInput} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleImage} />
 
-      <div data-layer="Frame 6" className={styles.fields}>
-        <label data-layer="Frame 7" className={styles.field}>Name
-          <input data-layer="Field / Name" className={styles.control} value={name} maxLength={60} placeholder="Item name" onChange={(event) => setName(event.target.value)} disabled={saving} />
-        </label>
-        <label data-layer="Frame 8" className={styles.field}>Category
-          <select data-layer="Field / Category" className={styles.control} value={category} onChange={(event) => setCategory(event.target.value as ClothingCategory | "")} disabled={saving} required>
-            <option value="" disabled>Choose a category</option>
-            {CLOTHING_CATEGORIES.map((option) => <option key={option} value={option}>{option}</option>)}
-          </select>
-        </label>
-        <fieldset data-layer="Frame 9" className={styles.field} style={{ border: 0, padding: 0, margin: 0 }}>
-          <legend>Tape</legend>
-          <TapeSelector value={colorTag} onChange={setColorTag} name="item-color-tag" disabled={saving} />
-        </fieldset>
-      </div>
-      <div className={`${styles.status} ${error || processingError ? styles.error : ""}`} role="status">
-        {isLoading ? "Loading item…" : error || processingError || (processing ? "Removing background…" : processedImage && newImage ? "Background removed." : saving ? "Saving…" : "")}
-        {processingError && newImage ? <button type="button" className={styles.retry} onClick={() => void removeBackground(newImage)} disabled={processing}>Retry</button> : null}
+      <div className={styles.details}>
+        <div data-layer="Frame 6" className={styles.fields}>
+          <label data-layer="Frame 7" className={styles.field}>Name
+            <input data-layer="Field / Name" className={styles.control} value={name} maxLength={60} placeholder="Item name" onChange={(event) => setName(event.target.value)} disabled={saving} />
+          </label>
+          <label data-layer="Frame 8" className={styles.field}>Category
+            <select data-layer="Field / Category" className={styles.control} value={category} onChange={(event) => setCategory(event.target.value as ClothingCategory | "")} disabled={saving} required>
+              <option value="" disabled>Choose a category</option>
+              {CLOTHING_CATEGORIES.map((option) => <option key={option} value={option}>{option}</option>)}
+            </select>
+          </label>
+          <fieldset data-layer="Frame 9" className={styles.field} style={{ border: 0, padding: 0, margin: 0 }}>
+            <legend>Tape</legend>
+            <TapeSelector value={colorTag} onChange={setColorTag} name="item-color-tag" disabled={saving} />
+          </fieldset>
+        </div>
+        <div className={`${styles.status} ${error || processingError ? styles.error : ""}`} role="status">
+          {isLoading ? "Loading item…" : error || processingError || (processing ? "Removing background…" : processedImage && newImage ? "Background removed." : saving ? "Saving…" : "")}
+          {processingError && newImage ? <button type="button" className={styles.retry} onClick={() => void removeBackground(newImage)} disabled={processing}>Retry</button> : null}
+        </div>
       </div>
     </form> : null}
 

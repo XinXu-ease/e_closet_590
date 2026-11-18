@@ -69,7 +69,6 @@ export default function FigmaSavedOutfits() {
           {filteredOutfits.filter((_, index) => index % 2 === 0).map(renderOutfit)}
         </div>
         {databaseError ? <p className={styles.state}>{databaseError}</p> : null}
-        {outfits?.length === 0 ? <p className={styles.state}>No saved outfits yet. <Link href="/outfits/new">Create your first outfit.</Link></p> : null}
         {outfits && outfits.length > 0 && filteredOutfits.length === 0 ? <p className={styles.state}>No outfits match this search.</p> : null}
       </div>
     </section>
