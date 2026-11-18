@@ -58,7 +58,7 @@ test("Figma Profile uses live totals, local assets and working information/avata
   await page.screenshot({ path: ".artifacts/profile-design.png", fullPage: true });
   await page.getByRole("button", { name: "Information", exact: true }).click();
   await page.getByRole("textbox", { name: "Name", exact: true }).fill("Alex");
-  await page.getByRole("button", { name: "Save information" }).click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.getByRole("status")).toContainText("Your profile has been saved");
   await page.getByRole("button", { name: "Close dialog" }).click();
   await expect(page.getByRole("heading", { name: "Alex", exact: true })).toBeVisible();
@@ -106,6 +106,7 @@ test("email OTP form handles errors, resend cooldown and successful login withou
 test("item deletion uses the in-app confirmation frame", async ({ page }) => {
   await page.route("**/api/me", route => route.fulfill({ json: { profile: null, configured: false, supportEmail: null } }));
   await page.goto("/profile");
+  await expect(page.getByRole("heading", { name: "Guest", exact: true })).toBeVisible();
   await seedLocalCloset(page, 1, 0);
   await page.goto("/items/item-0");
   await page.getByRole("button", { name: "Delete", exact: true }).click();
