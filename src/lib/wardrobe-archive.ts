@@ -1,7 +1,7 @@
 import { localId } from "./local-id";
 import { strFromU8, strToU8, unzipSync, zipSync } from "fflate";
 import { db, wardrobeFor, type EClosetDatabase } from "./db";
-import { CLOTHING_CATEGORIES, COLOR_TAGS, type ClothingItem, type Outfit, type OutfitPiece } from "./types";
+import { CLOTHING_CATEGORIES, TAPE_COLORS, type ClothingItem, type Outfit, type OutfitPiece } from "./types";
 
 const MAX_BYTES = 100 * 1024 * 1024;
 const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -79,7 +79,7 @@ export async function inspectArchive(file: Blob): Promise<WardrobeImport> {
     const id = text(i.id);
     if (ids.has(id)) throw new Error("The archive contains duplicate clothing IDs.");
     ids.add(id);
-    if (!CLOTHING_CATEGORIES.includes(i.category as ClothingItem["category"]) || !Object.hasOwn(COLOR_TAGS, String(i.colorTag))) throw new Error("An item has an invalid category or color.");
+    if (!CLOTHING_CATEGORIES.includes(i.category as ClothingItem["category"]) || !TAPE_COLORS.includes(i.colorTag as ClothingItem["colorTag"])) throw new Error("An item has an invalid category or color.");
     return { id, name: text(i.name, 60), category: i.category as ClothingItem["category"], colorTag: i.colorTag as ClothingItem["colorTag"], originalImage: image(i.original, i.originalType), processedImage: i.processed ? image(i.processed, i.processedType) : undefined, createdAt: number(i.createdAt), updatedAt: number(i.updatedAt) };
   });
   const outfitIds = new Set<string>();

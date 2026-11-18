@@ -8,9 +8,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Rnd } from "react-rnd";
 import { BottomNavigation } from "./BottomNavigation";
-import { ClothingCard } from "./ClothingCard";
 import { CollagePageHeader } from "./CollagePageHeader";
 import { OutfitWeather } from "./OutfitWeather";
+import { TapeSelector } from "./TapeSelector";
 import { useElementSize } from "@/hooks/useElementSize";
 import { useHorizontalDragScroll } from "@/hooks/useHorizontalDragScroll";
 import { useObjectUrl } from "@/hooks/useObjectUrl";
@@ -18,17 +18,17 @@ import { useAccount, useWardrobe } from "./AccountProvider";
 import { AuthCodeForm } from "./AuthCodeForm";
 import { ProfileDialog } from "./ProfileDialog";
 import { SignInPrompt } from "./SignInPrompt";
-import { CLOTHING_CATEGORIES, COLOR_TAGS, getDisplayImage, type ClothingCategory, type ClothingItem, type ColorTagId, type OutfitPiece } from "@/lib/types";
+import { CLOTHING_CATEGORIES, getDisplayImage, type ClothingCategory, type ClothingItem, type ColorTagId, type OutfitPiece } from "@/lib/types";
 import styles from "./FigmaOutfitDetail.module.css";
 import profileStyles from "./FigmaProfile.module.css";
 
 type FigmaOutfitDetailProps = { mode: "create" | "edit"; outfitId?: string };
 
-const TRAYS: { label: string; category: ClothingCategory; glyph: string; color: string }[] = [
-  { label: "Tops", category: "Tops", glyph: "▥", color: "#E8CFA8" },
-  { label: "Bottoms", category: "Bottoms", glyph: "▤", color: "#C7D9EB" },
-  { label: "Shoes", category: "Shoes", glyph: "⌁", color: "#EDC2B8" },
-  { label: "More", category: "Accessories", glyph: "＋", color: "#C7D6C2" },
+const TRAYS: { label: string; category: ClothingCategory }[] = [
+  { label: "Tops", category: "Tops" },
+  { label: "Bottoms", category: "Bottoms" },
+  { label: "Shoes", category: "Shoes" },
+  { label: "More", category: "Accessories" },
 ];
 
 function localDateName() {
@@ -55,6 +55,15 @@ function CanvasImage({ item }: { item: ClothingItem }) {
   return url ? <img className={styles.piece} src={url} alt={item.name} draggable={false} /> : null;
 }
 
+function OutfitClosetCard({ item, onClick }: { item: ClothingItem; onClick: () => void }) {
+  const url = useObjectUrl(getDisplayImage(item));
+  return <button type="button" className={styles.drawerCard} onClick={onClick}>
+    <span className={styles.drawerPreview}>{url ? <img src={url} alt="" /> : null}</span>
+    <span className={styles.drawerCardName}>{item.name}</span>
+    <span className={styles.drawerTape} aria-label={`${item.colorTag} tape tag`}><img src={`/figma/tape-${item.colorTag}.png`} alt="" /></span>
+  </button>;
+}
+
 export default function FigmaOutfitDetail({ mode, outfitId }: FigmaOutfitDetailProps) {
   const wardrobe = useWardrobe();
   const account = useAccount();
@@ -68,7 +77,7 @@ export default function FigmaOutfitDetail({ mode, outfitId }: FigmaOutfitDetailP
   const [name, setName] = useState("");
   const [datePlaceholder, setDatePlaceholder] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [category, setCategory] = useState<ClothingCategory>("Tops");
+  const [category, setCategory] = useState<ClothingCategory | "All">("Tops");
   const [colorTag, setColorTag] = useState<ColorTagId | "All">("All");
   const [initializedId, setInitializedId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -110,7 +119,7 @@ export default function FigmaOutfitDetail({ mode, outfitId }: FigmaOutfitDetailP
 
   const itemMap = useMemo(() => new Map((items ?? []).map((item) => [item.id, item])), [items]);
   const filteredItems = (items ?? []).filter((item) =>
-    item.category === category && (colorTag === "All" || item.colorTag === colorTag),
+    (category === "All" || item.category === category) && (colorTag === "All" || item.colorTag === colorTag),
   );
   const selected = pieces.find((piece) => piece.instanceId === selectedId);
   const missingOutfit = mode === "edit" && outfitQuery !== undefined && !outfitQuery.error && outfit === null;
@@ -211,6 +220,7 @@ export default function FigmaOutfitDetail({ mode, outfitId }: FigmaOutfitDetailP
     <CollagePageHeader title="Outfit Detail" description="Drag, layer, and resize your pieces." />
     <div className={styles.weatherSlot}><OutfitWeather /></div>
 
+    <div className={styles.formFrame}>
     <div ref={canvasRef} data-layer="Outfit canvas" className={styles.canvas} onPointerDown={(event) => { if (event.target === event.currentTarget) setSelectedId(undefined); }}>
       {pieces.map((piece) => {
         const item = itemMap.get(piece.clothingId);
@@ -240,18 +250,17 @@ export default function FigmaOutfitDetail({ mode, outfitId }: FigmaOutfitDetailP
 
     <section className={`${styles.closetPanel} ${drawerOpen ? styles.closetPanelOpen : ""}`}>
       <div className={styles.panelHeader}><span>ADD FROM CLOSET</span>{drawerOpen ? <button type="button" className={styles.collapse} aria-label="Collapse closet" onClick={() => setDrawerOpen(false)}>⌄</button> : null}</div>
-      {!drawerOpen ? <div data-layer="Item tray" className={styles.trays}>{TRAYS.map((tray) => <button key={tray.label} type="button" className={styles.tray} style={{ backgroundColor: tray.color }} onClick={() => { setCategory(tray.category); setDrawerOpen(true); }}><span className={styles.trayGlyph}>{tray.glyph}</span><span className={styles.trayLabel}>{tray.label}</span></button>)}</div> : <>
-        <div className={styles.chips} {...chipDrag}>{CLOTHING_CATEGORIES.map((chip) => <button key={chip} type="button" className={`${styles.chip} ${category === chip ? styles.chipActive : ""}`} onClick={() => setCategory(chip)}>{chip}</button>)}</div>
+      {!drawerOpen ? <div data-layer="Item tray" className={styles.trays}>{TRAYS.map((tray) => <button key={tray.label} type="button" className={styles.tray} onClick={() => { setCategory(tray.category); setDrawerOpen(true); }}><span className={styles.trayLabel}>{tray.label}</span></button>)}</div> : <>
+        <div className={styles.chips} {...chipDrag}>{(["All", ...CLOTHING_CATEGORIES] as const).map((chip) => <button key={chip} type="button" className={`${styles.chip} ${category === chip ? styles.chipActive : ""}`} onClick={() => setCategory(chip)}>{chip}</button>)}</div>
         <div data-layer="Color tag filter" className={styles.colorFilters} aria-label="Filter by color tag">
-          <span className={styles.colorFilterLabel}>COLOR</span>
-          <button type="button" className={`${styles.colorAll} ${colorTag === "All" ? styles.colorAllActive : ""}`} aria-pressed={colorTag === "All"} onClick={() => setColorTag("All")}>All</button>
-          {(Object.entries(COLOR_TAGS) as [ColorTagId, string][]).map(([id, color]) => <button key={id} type="button" className={`${styles.colorFilter} ${colorTag === id ? styles.colorFilterActive : ""}`} style={{ backgroundColor: color }} aria-label={`Filter by ${id}`} aria-pressed={colorTag === id} onClick={() => setColorTag(id)} />)}
+          <button type="button" className={`${styles.chip} ${styles.colorAll} ${colorTag === "All" ? styles.chipActive : ""}`} aria-pressed={colorTag === "All"} onClick={() => setColorTag("All")}>All</button>
+          <TapeSelector value={colorTag === "All" ? "" : colorTag} onChange={setColorTag} name="outfit-color-tag" compact />
         </div>
         <div className={styles.drawerGrid}>
           {items === undefined ? <p className={styles.drawerState}>Loading your closet…</p> : null}
           {items?.length === 0 ? <p className={styles.drawerState}>Your closet is empty. <Link href="/items/new">Add an item in Closet.</Link></p> : null}
-          {items && items.length > 0 && filteredItems.length === 0 ? <p className={styles.drawerState}>No {category.toLowerCase()} match these filters.</p> : null}
-          {filteredItems.map((item) => <ClothingCard key={item.id} item={item} onClick={() => void addItem(item)} />)}
+          {items && items.length > 0 && filteredItems.length === 0 ? <p className={styles.drawerState}>No {category === "All" ? "items" : category.toLowerCase()} match these filters.</p> : null}
+          {filteredItems.map((item) => <OutfitClosetCard key={item.id} item={item} onClick={() => void addItem(item)} />)}
         </div>
       </>}
     </section>
@@ -261,6 +270,7 @@ export default function FigmaOutfitDetail({ mode, outfitId }: FigmaOutfitDetailP
       <button type="button" className={`${styles.action} ${styles.primary}`} disabled={saving || pieces.length === 0 || missingOutfit || Boolean(databaseError)} onClick={() => void save()}>{saving ? "Saving…" : "Save"}</button>
     </div>
     {databaseError ? <p className={styles.error}>{databaseError}</p> : missingOutfit ? <p className={styles.error}>This outfit no longer exists.</p> : error ? <p className={styles.error} role="status">{error}</p> : null}
+    </div>
     {signInOpen ? <ProfileDialog title="Outfit" onClose={() => { setSignInOpen(false); setShowAuthForm(false); }}>
       {showAuthForm ? <AuthCodeForm onComplete={async (nextProfile) => { await account.acceptProfile(nextProfile); setSignInOpen(false); setShowAuthForm(false); }} /> : <SignInPrompt onLogin={() => setShowAuthForm(true)} />}
     </ProfileDialog> : null}

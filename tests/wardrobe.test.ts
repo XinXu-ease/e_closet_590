@@ -47,13 +47,14 @@ test("v1 upgrade preserves photos, IDs and outfit references in a guest partitio
   const name = `migration-${crypto.randomUUID()}`;
   const old = new Dexie(name);
   old.version(1).stores({ clothingItems: "&id, name, category, colorTag, createdAt, updatedAt", outfits: "&id, name, createdAt, updatedAt" });
-  await old.table("clothingItems").add(item()); await old.table("outfits").add(outfit()); old.close();
+  await old.table("clothingItems").add({ ...item(), colorTag: "lime" }); await old.table("outfits").add(outfit()); old.close();
   const db = new EClosetDatabase(name);
   try {
     const account = await localAccount(db);
     assert.match(account.activeOwner, /^guest:/);
     const wardrobe = wardrobeFor(account.activeOwner, db);
     assert.equal((await wardrobe.item("shirt"))?.ownerId, account.activeOwner);
+    assert.equal((await wardrobe.item("shirt"))?.colorTag, "yellow");
     assert.deepEqual(await (await wardrobe.item("shirt"))!.originalImage.arrayBuffer(), await png.arrayBuffer());
     assert.equal((await wardrobe.outfit("look"))?.pieces[0].clothingId, "shirt");
   } finally { await db.delete(); }

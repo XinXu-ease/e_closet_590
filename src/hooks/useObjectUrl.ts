@@ -7,14 +7,15 @@ export function useObjectUrl(blob?: Blob) {
 
   useEffect(() => {
     if (!blob) {
-      const clearTimer = window.setTimeout(() => setUrl(undefined), 0);
-      return () => window.clearTimeout(clearTimer);
+      // The URL mirrors an external Blob resource after the component mounts.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setUrl(undefined);
+      return;
     }
 
     const nextUrl = URL.createObjectURL(blob);
-    const setTimer = window.setTimeout(() => setUrl(nextUrl), 0);
+    setUrl(nextUrl);
     return () => {
-      window.clearTimeout(setTimer);
       URL.revokeObjectURL(nextUrl);
     };
   }, [blob]);

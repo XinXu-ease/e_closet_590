@@ -1,6 +1,6 @@
 import { localId } from "./local-id";
 import Dexie, { type EntityTable } from "dexie";
-import type { ClothingItem, Outfit } from "./types";
+import type { ClothingItem, ColorTagId, Outfit } from "./types";
 import type { Profile } from "./profile";
 
 export type LocalAccount = {
@@ -8,6 +8,16 @@ export type LocalAccount = {
   guestOwner: string;
   activeOwner: string;
   profile: Profile | null;
+};
+
+const LEGACY_TAPE_COLORS: Record<string, ColorTagId> = {
+  red: "red",
+  rose: "red",
+  sand: "orange",
+  lime: "yellow",
+  green: "green",
+  blue: "blue",
+  purple: "purple",
 };
 
 export class EClosetDatabase extends Dexie {
@@ -30,6 +40,15 @@ export class EClosetDatabase extends Dexie {
       await tx.table("settings").put({ key: "account", guestOwner, activeOwner: guestOwner, profile: null });
       await tx.table("clothingItems").toCollection().modify({ ownerId: guestOwner });
       await tx.table("outfits").toCollection().modify({ ownerId: guestOwner });
+    });
+    this.version(3).stores({
+      clothingItems: "&id, ownerId, [ownerId+createdAt], [ownerId+updatedAt], name, category, colorTag, createdAt, updatedAt",
+      outfits: "&id, ownerId, [ownerId+updatedAt], name, createdAt, updatedAt",
+      settings: "&key",
+    }).upgrade(async (tx) => {
+      await tx.table("clothingItems").toCollection().modify((item: ClothingItem) => {
+        item.colorTag = LEGACY_TAPE_COLORS[item.colorTag] ?? "red";
+      });
     });
   }
 }
