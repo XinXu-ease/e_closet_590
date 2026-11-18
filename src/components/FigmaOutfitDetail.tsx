@@ -220,7 +220,6 @@ export default function FigmaOutfitDetail({ mode, outfitId }: FigmaOutfitDetailP
     <CollagePageHeader title="Outfit Detail" description="Drag, layer, and resize your pieces." />
     <div className={styles.weatherSlot}><OutfitWeather /></div>
 
-    <div className={styles.formFrame}>
     <div ref={canvasRef} data-layer="Outfit canvas" className={styles.canvas} onPointerDown={(event) => { if (event.target === event.currentTarget) setSelectedId(undefined); }}>
       {pieces.map((piece) => {
         const item = itemMap.get(piece.clothingId);
@@ -246,10 +245,11 @@ export default function FigmaOutfitDetail({ mode, outfitId }: FigmaOutfitDetailP
       </div>
     </div>
 
-    <label className={styles.nameField}>OUTFIT NAME<input className={styles.nameInput} value={name} maxLength={60} placeholder={datePlaceholder || "Date"} onChange={(event) => setName(event.target.value)} /></label>
+    <div className={styles.formFrame}>
+    <label className={styles.nameField}>Outfit Name<input className={styles.nameInput} value={name} maxLength={60} placeholder={datePlaceholder || "Date"} onChange={(event) => setName(event.target.value)} /></label>
 
     <section className={`${styles.closetPanel} ${drawerOpen ? styles.closetPanelOpen : ""}`}>
-      <div className={styles.panelHeader}><span>ADD FROM CLOSET</span>{drawerOpen ? <button type="button" className={styles.collapse} aria-label="Collapse closet" onClick={() => setDrawerOpen(false)}>⌄</button> : null}</div>
+      <div className={styles.panelHeader}><span>Add from Closet</span>{drawerOpen ? <button type="button" className={styles.collapse} aria-label="Collapse closet" onClick={() => setDrawerOpen(false)}><svg aria-hidden="true" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="m5 7 5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg></button> : null}</div>
       {!drawerOpen ? <div data-layer="Item tray" className={styles.trays}>{TRAYS.map((tray) => <button key={tray.label} type="button" className={styles.tray} onClick={() => { setCategory(tray.category); setDrawerOpen(true); }}><span className={styles.trayLabel}>{tray.label}</span></button>)}</div> : <>
         <div className={styles.chips} {...chipDrag}>{(["All", ...CLOTHING_CATEGORIES] as const).map((chip) => <button key={chip} type="button" className={`${styles.chip} ${category === chip ? styles.chipActive : ""}`} onClick={() => setCategory(chip)}>{chip}</button>)}</div>
         <div data-layer="Color tag filter" className={styles.colorFilters} aria-label="Filter by color tag">

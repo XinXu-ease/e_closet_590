@@ -1,47 +1,48 @@
 .screen { position: relative; width: min(402px, 100vw); height: 874px; overflow: hidden; background-color: #fff; background-image: linear-gradient(rgb(255 255 255 / 80%), rgb(255 255 255 / 80%)), url("/figma/background.png"); background-position: center, center; background-size: cover, cover; border: 2px solid #29241f; border-radius: 32px; }
 .header { position: absolute; top: 20px; right: 24px; left: 24px; padding: 5px 4px; }
-.brand { color: #756e63; font-family: "Old Standard TT", Georgia, serif; font-size: 11px; font-weight: 600; }
-.title { margin-top: 5px; color: #29241f; font-family: "Old Standard TT", Georgia, serif; font-size: 30px; font-weight: 700; line-height: 1; }
-.subtitle { margin-top: 6px; color: #756e63; font-family: "Old Standard TT", Georgia, serif; font-size: 13px; }
-.weather { display: flex; flex-direction: column; align-items: flex-end; color: #756e63; font-size: 10px; line-height: 1.35; text-align: right; white-space: nowrap; }
-.weatherPrimary { color: #29241f; font-size: 12px; font-weight: 600; }
+.brand { color: #756e63; font-family: var(--font-family-primary); font-size: var(--font-size-ui); font-weight: var(--font-weight-bold); }
+.title { margin-top: 5px; color: #29241f; font-family: var(--font-family-primary); font-size: var(--font-size-display); font-weight: var(--font-weight-bold); line-height: 1; }
+.subtitle { margin-top: 6px; color: #756e63; font-family: var(--font-family-primary); font-size: var(--font-size-ui); }
+.weather { display: flex; flex-direction: column; align-items: flex-end; color: #756e63; font-size: var(--font-size-ui); line-height: 1.35; text-align: right; white-space: nowrap; }
+.weatherPrimary { color: #29241f; font-size: var(--font-size-ui); font-weight: var(--font-weight-bold); }
 .weatherMuted { color: #756e63; }
-.weatherSlot { position: absolute; top: 20px; right: 24px; z-index: 1; }
-.formFrame { position: absolute; top: 124px; right: 24px; bottom: 72px; left: 24px; display: flex; flex-direction: column; gap: 16px; padding-bottom: 20px; overflow-x: hidden; overflow-y: auto; scrollbar-width: none; }
+.weatherSlot { position: absolute; top: 32px; right: 24px; z-index: 1; }
+.formFrame { position: absolute; top: 484px; right: 24px; bottom: 72px; left: 24px; display: flex; flex-direction: column; gap: 16px; padding-bottom: 20px; overflow-x: hidden; overflow-y: auto; scrollbar-width: none; }
 .formFrame::-webkit-scrollbar { display: none; }
-.canvas { composes: detailFrame from "./CollageFormFrame.module.css"; position: relative; width: 100%; height: 330px; flex: 0 0 330px; overflow: hidden; touch-action: none; }
+.canvas { composes: detailFrame from "./CollageFormFrame.module.css"; position: absolute; top: 124px; right: 24px; left: 24px; height: 330px; overflow: hidden; touch-action: none; }
 .piece { width: 100%; height: 100%; object-fit: contain; user-select: none; pointer-events: none; }
 .selected { outline: 1.5px solid #29241f; outline-offset: 2px; }
 .nameField { composes: fieldLabel from "./CollageFormFrame.module.css"; display: flex; width: 100%; flex: 0 0 auto; flex-direction: column; gap: 8px; }
 .nameInput { composes: inputFrame from "./CollageFormFrame.module.css"; width: 100%; height: 42px; padding: 0 14px; }
-.controls { position: absolute; top: 50%; right: 10px; z-index: 100; display: flex; width: 42px; flex-direction: column; align-items: center; gap: 2px; padding: 4px; background: transparent; border: 1px solid #c2b8ab; border-radius: 14px; transform: translateY(-50%); }
+.controls { position: absolute; top: 50%; right: 10px; z-index: 100; display: flex; width: 42px; flex-direction: column; align-items: center; gap: 2px; padding: 4px; background: url("/figma/layer-frame.png") center / 100% 100% no-repeat; border: 0; border-radius: 0; transform: translateY(-50%); }
 .control { display: grid; width: 32px; height: 32px; place-items: center; padding: 0; color: #29241f; background: transparent; border: 0; border-radius: 9px; }
 .control:not(:disabled):hover { background: rgb(41 36 31 / 7%); }
 .control:not(:disabled):focus-visible { outline: 1.5px solid #29241f; outline-offset: -1px; }
-.control:disabled { color: #aaa39a; cursor: not-allowed; }
+.control:disabled { color: #29241f; cursor: not-allowed; }
 .closetPanel { position: relative; width: 100%; height: auto; flex: 0 0 auto; align-self: center; padding: 0; overflow: hidden; border: 0; border-radius: 0; transition: background-color .24s ease, padding .24s ease; }
 .closetPanelOpen { height: 257px; padding: 10px 10px 8px; background: #fff; border: 1px solid #29241f; }
 .panelHeader { composes: fieldLabel from "./CollageFormFrame.module.css"; display: flex; height: 19px; align-items: center; justify-content: space-between; }
-.collapse { display: grid; width: 32px; height: 32px; place-items: center; margin: -10px -4px 0 0; padding: 0; color: #756e63; background: transparent; border: 0; border-radius: 9px; font-size: 24px; line-height: 1; cursor: pointer; transition: background-color .2s ease; }
+.collapse { display: grid; width: 32px; height: 32px; place-items: center; margin: 0px -4px 0 0; padding: 0; color: #29241f; background: transparent; border: 0; border-radius: 9px; font-size: var(--icon-size-control); line-height: 1; cursor: pointer; transition: background-color .2s ease; }
+.collapse svg { display: block; }
 .collapse:focus-visible { outline: 1.5px solid #29241f; }
 .trays { display: flex; width: 100%; height: 32px; align-items: flex-start; justify-content: space-between; gap: 17px; margin-top: 8px; padding: 0; }
 .tray { display: flex; min-width: 0; height: 32px; flex: 1 1 0; align-items: center; justify-content: center; padding: 0 6px; overflow: hidden; color: #29241f; background: url("/figma/item-tray-card-background.png") center / 100% 100% no-repeat; border: 0; border-radius: 0; }
-.trayLabel { overflow: hidden; font-family: "Old Standard TT", Georgia, serif; font-size: 12px; font-weight: 600; line-height: 1; text-overflow: ellipsis; white-space: nowrap; }
+.trayLabel { overflow: hidden; font-family: var(--font-family-primary); font-size: var(--font-size-ui); font-weight: var(--font-weight-bold); line-height: 1; text-overflow: ellipsis; white-space: nowrap; }
 .chips { display: flex; gap: 4px; margin-top: 8px; padding: 4px; overflow-x: auto; cursor: grab; user-select: none; scrollbar-width: none; }
 .chips[data-dragging="true"] { cursor: grabbing; }
 .chips::-webkit-scrollbar, .drawerGrid::-webkit-scrollbar { display: none; }
-.chip { flex: 0 0 auto; padding: 5px 9px; color: #5b5200; background: #fff; border: 1px solid #a9c6f2; border-radius: 0; font-family: "Old Standard TT", Georgia, serif; font-size: 12px; }
-.chipActive { color: #29241f; font-weight: 700; background: #ffe500; border-color: #ffe500; }
+.chip { flex: 0 0 auto; padding: 5px 9px; color: #5b5200; background: #fff; border: 1px solid #a9c6f2; border-radius: 0; font-family: var(--font-family-primary); font-size: var(--font-size-ui); }
+.chipActive { color: #29241f; font-weight: var(--font-weight-bold); background: #ffe500; border-color: #ffe500; }
 .colorFilters { display: flex; min-height: 38px; align-items: center; gap: 8px; padding-left: 4px; }
 .colorAll { height: 22px; padding: 0 8px; }
 .drawerGrid { display: grid; height: 145px; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 12px; margin-top: 8px; padding-bottom: 8px; overflow-y: auto; scrollbar-width: none; }
 .drawerCard { composes: frame from "./CollageCardFrame.module.css"; display: flex; width: 100%; min-width: 0; flex-direction: column; gap: 5px; padding: 6px; appearance: none; text-align: left; }
 .drawerPreview { position: relative; display: grid; width: 100%; height: 82px; place-items: center; overflow: hidden; background: #fff; }
 .drawerPreview img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; object-position: center; }
-.drawerCardName { overflow: hidden; padding-right: 32px; color: #29241f; font-family: "Old Standard TT", Georgia, serif; font-size: 12px; font-weight: 600; line-height: 16px; text-overflow: ellipsis; white-space: nowrap; }
+.drawerCardName { overflow: hidden; padding-right: 32px; color: #29241f; font-family: var(--font-family-primary); font-size: var(--font-size-ui); font-weight: var(--font-weight-bold); line-height: 16px; text-overflow: ellipsis; white-space: nowrap; }
 .drawerCard > .drawerTape { position: absolute; right: 4px; bottom: 4px; z-index: 3; display: block; width: 30px; height: 31px; pointer-events: none; }
 .drawerTape img { display: block; width: 100%; height: 100%; object-fit: contain; }
-.drawerState { grid-column: 1 / -1; margin: 15px 8px; color: #756e63; font-size: 12px; line-height: 1.45; text-align: center; }
+.drawerState { grid-column: 1 / -1; margin: 15px 8px; color: #756e63; font-size: var(--font-size-ui); line-height: 1.45; text-align: center; }
 .drawerState a { text-decoration: underline; }
 .actions { display: flex; width: 100%; flex: 0 0 auto; gap: 12px; }
 .action { composes: actionFrame from "./CollageFormFrame.module.css"; flex: 1; }
@@ -49,4 +50,4 @@
 .danger { color: #fffefb; background: #c74038; border-color: #c74038; }
 .primary { color: #29241f; background: #ffe500; }
 .action:disabled { cursor: not-allowed; opacity: .5; }
-.error { width: 100%; flex: 0 0 auto; margin: 0; color: #a33f39; font-size: 11px; text-align: center; }
+.error { width: 100%; flex: 0 0 auto; margin: 0; color: #a33f39; font-size: var(--font-size-ui); text-align: center; }

@@ -9,11 +9,19 @@
   position: absolute;
   inset: 0;
   z-index: 0;
-  background: url("/figma/saved-outfits-card-brush-border.png") center / 100% 100% no-repeat;
+  background: url("/figma/clothing-card-brush-border.png") center / 100% 100% no-repeat;
   content: "";
 }
 
 .frame > * {
   position: relative;
   z-index: 1;
+}
+
+.outfitFrame {
+  composes: frame;
+}
+
+.outfitFrame::before {
+  background-image: url("/figma/saved-outfits-card-brush-border.png");
 }

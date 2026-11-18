@@ -18,7 +18,7 @@ import styles from "./FigmaProfile.module.css";
 
 type Panel = "account" | "login" | "information" | "settings" | "contact" | "logout" | "clear" | "import" | "guest-clothes" | "discard-guest" | "reauth-delete" | "delete" | "reauth-phone" | "phone";
 const DEFAULT_AVATAR = "/figma/nav-create.png";
-const TITLES: Record<Panel, string> = { account: "Sign in", login: "Sign in", information: "Information", settings: "Settings", contact: "Contact & privacy", logout: "Log out", clear: "Clear local closet", import: "Import your closet", "guest-clothes": "Your clothes", "discard-guest": "Remove guest clothes", "reauth-delete": "Confirm your identity", delete: "Delete account", "reauth-phone": "Confirm your identity", phone: "Change phone number" };
+const TITLES: Record<Panel, string> = { account: "Sign in", login: "Sign in", information: "Information", settings: "Settings", contact: "Contact & Privacy", logout: "Log out", clear: "Clear local closet", import: "Import your closet", "guest-clothes": "Your clothes", "discard-guest": "Remove guest clothes", "reauth-delete": "Confirm your identity", delete: "Delete account", "reauth-phone": "Confirm your identity", phone: "Change phone number" };
 
 export default function FigmaProfile({ initialPanel }: { initialPanel?: "login" }) {
   const account = useAccount();
@@ -109,7 +109,7 @@ export default function FigmaProfile({ initialPanel }: { initialPanel?: "login" 
     <img className={styles.horizontal} src="/figma/profile-line-horizontal.svg" alt="" />
     <header className={styles.header}>
       <span className={styles.quote} aria-hidden="true"><img src="/figma/saved-outfits-header.png" alt="" /></span>
-      <div className={styles.greeting}><h1 title={profile?.displayName || undefined}>{profile ? profile.displayName || "Your profile" : "Guest"}</h1><p>Welcome!!!</p></div>
+      <div className={styles.greeting}><h1 title={profile?.displayName || undefined}>{profile ? profile.displayName || "Your profile" : "Guest"}</h1></div>
     </header>
     <button className={styles.avatar} aria-label={profile ? "Edit your avatar" : "Log in to edit your avatar"} onClick={() => open("information")}><img src={profile?.avatarUrl ?? DEFAULT_AVATAR} alt="Your profile avatar" /></button>
     <div className={styles.statistics} aria-label="Local closet totals">
@@ -134,13 +134,15 @@ export default function FigmaProfile({ initialPanel }: { initialPanel?: "login" 
       {panel === "information" ? profile ? <form className={styles.form} onSubmit={(e) => { e.preventDefault(); void saveProfile(); }}>
         <label className={styles.field}>Name<input value={name} onChange={(e) => setName(e.target.value)} maxLength={40} autoComplete="nickname" placeholder="Your name" disabled={busy} /></label>
         <dl className={styles.details}>{profile.email ? <><dt>Email address</dt><dd>{profile.email}</dd></> : null}</dl>
-        <label className={styles.avatarEditor}>Change your avatar<input className={styles.hidden} type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => chooseAvatar(event.target.files?.[0])} disabled={busy} />{avatarPreview ? <span className={styles.avatarPreview}><img src={avatarPreview} alt="New avatar preview" /></span> : null}<span className={styles.secondary}>Choose photo</span></label>
-        <button className={styles.primary} disabled={busy || offline}>Save information</button>
+        <label className={styles.avatarEditor} aria-label="Change your avatar"><input className={styles.hidden} type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => chooseAvatar(event.target.files?.[0])} disabled={busy} />{avatarPreview ? <span className={styles.avatarPreview}><img src={avatarPreview} alt="New avatar preview" /></span> : null}<span className={`${styles.secondary} ${styles.textAction}`}>Change your avatar</span></label>
+        <button className={styles.primary} disabled={busy || offline}>Save</button>
         {account.phoneEnabled ? <button type="button" className={styles.secondary} disabled={busy || offline} onClick={() => open("reauth-phone")}>{profile.phone ? "Change phone number" : "Add phone number"}</button> : null}
       </form> : guestPrompt : null}
       {panel === "settings" ? profile ? <div className={styles.stack}>
-        <button className={styles.secondary} onClick={() => void download()} disabled={busy}>Export closet</button>
-        <button className={styles.secondary} onClick={() => fileInput.current?.click()} disabled={busy}>Import closet</button>
+        <div className={styles.transferActions}>
+          <button className={`${styles.secondary} ${styles.transferAction}`} onClick={() => void download()} disabled={busy}>Export closet</button>
+          <button className={`${styles.secondary} ${styles.transferAction}`} onClick={() => fileInput.current?.click()} disabled={busy}>Import closet</button>
+        </div>
         <input className={styles.hidden} ref={fileInput} type="file" accept=".zip,application/zip" aria-label="Choose closet archive" onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ""; if (file) void run(async () => { setArchive(await inspectArchive(file)); setPanel("import"); }); }} />
         <button className={styles.danger} onClick={() => open("clear")} disabled={busy || !stats || (!stats.items && !stats.outfits)}>Clear this local closet</button>
         {profile ? <button className={styles.danger} onClick={() => open("reauth-delete")} disabled={busy || offline}>Delete account</button> : null}
@@ -149,7 +151,7 @@ export default function FigmaProfile({ initialPanel }: { initialPanel?: "login" 
       {panel === "guest-clothes" ? <div className={styles.stack}><p>Add {stats?.guestItems ?? 0} clothes and {stats?.guestOutfits ?? 0} outfits you created before signing in to this account?</p><button className={styles.primary} disabled={busy} onClick={() => void run(async () => { await wardrobe.claimGuest(); setPanel(profile?.setupComplete === false ? "information" : null); })}>Add</button><button className={styles.secondary} disabled={busy} onClick={() => open("discard-guest")}>Skip</button></div> : null}
       {panel === "discard-guest" ? <div className={styles.stack}><p>Remove the clothes and outfits you created before signing in? This cannot be undone.</p><button className={styles.danger} disabled={busy} onClick={() => void run(async () => { await wardrobe.clearGuest(); setPanel(profile?.setupComplete === false ? "information" : null); })}>Remove guest clothes</button><button className={styles.secondary} disabled={busy} onClick={() => open("guest-clothes")}>Go back</button></div> : null}
       {panel === "clear" ? <div className={styles.stack}><p>Permanently remove {stats?.items ?? 0} clothing items, their photos, and {stats?.outfits ?? 0} outfits from this local closet?</p><button className={styles.danger} disabled={busy} onClick={() => void run(async () => { await wardrobe.clear(); setPanel("settings"); setMessage("This local closet has been cleared."); })}>Permanently clear this closet</button></div> : null}
-      {panel === "logout" ? <div className={styles.stack}><p>Your clothes and photos stay on this device. Sign in to this account again to see them.</p><button className={styles.primary} disabled={busy || offline} onClick={() => void run(async () => { await api("/api/auth/logout", {}); await account.acceptProfile(null); setPanel(null); })}>Log out of this account</button></div> : null}
+      {panel === "logout" ? <div className={styles.stack}><p>Your clothes and photos stay on this device. Sign in to this account again to see them. Delete the app will remove all the information.</p><button className={styles.primary} disabled={busy || offline} onClick={() => void run(async () => { await api("/api/auth/logout", {}); await account.acceptProfile(null); setPanel(null); })}>Log out of this account</button></div> : null}
       {panel === "reauth-delete" || panel === "reauth-phone" ? <AuthCodeForm key={panel} purpose="reauthenticate" onComplete={() => { setError(""); setPanel(panel === "reauth-delete" ? "delete" : "phone"); }} /> : null}
       {panel === "phone" ? <AuthCodeForm purpose="change" onComplete={async (p) => { await account.acceptProfile(p); setPanel("information"); setMessage("Your phone number has been updated."); }} /> : null}
       {panel === "delete" ? <div className={styles.stack}><p>This permanently deletes your account, profile, and this account’s local wardrobe on this browser.</p><p className={styles.note}>Exported ZIP files and copies on other offline devices remain under your control. This cannot be undone.</p><button className={styles.danger} disabled={busy} onClick={() => void run(async () => {
@@ -158,7 +160,7 @@ export default function FigmaProfile({ initialPanel }: { initialPanel?: "login" 
       })}>{deleted ? "Retry clearing local data" : "Permanently delete my account"}</button></div> : null}
       {panel === "contact" ? <div className={styles.stack}>
         <p>E-Closet is your personal wardrobe journal.</p>
-        {account.supportEmail ? <a className={styles.secondary} href={`mailto:${account.supportEmail}`}>Email support</a> : <p className={styles.note}>A support email has not been published yet.</p>}
+        <a className={styles.textAction} href={`mailto:${account.supportEmail ?? "x9916643@gmail.com"}`}>{account.supportEmail ?? "x9916643@gmail.com"}</a>
         <hr className={styles.divider} /><strong>Your data</strong><p>Clothing, outfits, and photos stay on this device. Account information is stored securely with our account provider.</p><p>Background removal sends a resized copy of your photo to remove.bg. Optional weather uses rounded location coordinates.</p><p>Use Settings to export or clear your local closet, or delete your account. Clearing browser data removes local photos and outfits.</p>
       </div> : null}
       {busy ? <p className={styles.note} role="status">Please wait…</p> : null}

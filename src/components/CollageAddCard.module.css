@@ -1,0 +1,7 @@
+.frame {
+  display: grid;
+  width: 100%;
+  aspect-ratio: 699 / 307;
+  place-items: center;
+  background: url("/figma/add-item-card.png") center / 100% 100% no-repeat;
+}

@@ -236,7 +236,7 @@ export default function FigmaItemDetail({ mode, itemId }: FigmaItemDetailProps) 
     {!isBlocked ? <form className={styles.form} onSubmit={(event) => { event.preventDefault(); void save(); }}>
       <button type="button" data-layer={imageUrl ? "Image / Existing item" : "Image picker / Empty"} className={`${styles.imageButton} ${imageUrl ? styles.hasImage : ""}`} onClick={() => fileInputRef.current?.click()} disabled={saving}>
         {imageUrl ? <img src={imageUrl} alt="Selected clothing" /> : <>
-          <span className={styles.uploadIcon} aria-hidden="true">+</span>
+          <span className={styles.uploadIcon} aria-hidden="true"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M14 6v16M6 14h16" stroke="#29241F" strokeWidth="2" strokeLinecap="round" /></svg></span>
           <span className={styles.uploadPrompt}>Tap to choose a photo</span>
           <span className={styles.uploadHelper}>Background removal runs automatically</span>
         </>}

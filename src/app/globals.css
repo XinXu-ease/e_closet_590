@@ -1,5 +1,19 @@
 :root {
   --ink: #20211f;
+  --font-family-primary: "Old Standard TT", Georgia, serif;
+  --font-size-display: 30px;
+  --font-size-title: 24px;
+  --font-size-body: 14px;
+  --font-size-ui: 12px;
+  --font-weight-regular: 400;
+  --font-weight-bold: 700;
+  --icon-size-search: 20px;
+  --icon-size-control: 24px;
+  --color-text-primary: #29241f;
+  --color-text-muted: #756e63;
+  --color-text-olive: #5b5200;
+  --color-text-error: #a33f39;
+  --color-text-success: #35643a;
 }
 
 .account-loading { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 24px; text-align: center; }
@@ -14,7 +28,7 @@ body {
   margin: 0;
   background: #fff;
   color: var(--ink);
-  font-family: "Old Standard TT", Georgia, serif;
+  font-family: var(--font-family-primary);
 }
 
 button,
@@ -22,7 +36,7 @@ input,
 select,
 textarea {
   color: inherit;
-  font-family: "Old Standard TT", Georgia, serif;
+  font-family: var(--font-family-primary);
 }
 
 button,
@@ -47,8 +61,7 @@ button {
   overflow: auto;
 }
 
-/* Individual Figma-derived components choose their own typeface.  The body
-   still supplies Inter as the default, without overriding those choices. */
+/* Components inherit the single project typeface and use the tokens above. */
 
 @media (max-width: 440px) {
   .figma-page-stage {

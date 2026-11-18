@@ -8,7 +8,7 @@ import { BottomNavigation } from "./BottomNavigation";
 import { CollagePageHeader } from "./CollagePageHeader";
 import { useObjectUrl } from "@/hooks/useObjectUrl";
 import { useWardrobe } from "./AccountProvider";
-import { getDisplayImage, type ClothingItem, type OutfitPiece } from "@/lib/types";
+import { getDisplayImage, type ClothingItem, type Outfit, type OutfitPiece } from "@/lib/types";
 import styles from "./FigmaSavedOutfits.module.css";
 
 function PreviewPiece({ piece, item }: { piece: OutfitPiece; item: ClothingItem }) {
@@ -38,9 +38,19 @@ export default function FigmaSavedOutfits() {
       !query || outfit.name.toLocaleLowerCase().includes(query),
     );
   }, [outfits, search]);
+  const renderOutfit = (outfit: Outfit) => <Link key={outfit.id} href={`/outfits/${outfit.id}`} aria-label={`Open ${outfit.name}`} className={styles.card}>
+    <div className={styles.name}>{outfit.name}</div>
+    <div className={styles.preview}>
+      <div className={styles.composition}>{outfit.pieces.map((piece) => {
+        const item = itemMap.get(piece.clothingId);
+        return item ? <PreviewPiece key={piece.instanceId} piece={piece} item={item} /> : null;
+      })}</div>
+      <span className={styles.openBadge}>Open →</span>
+    </div>
+  </Link>;
 
   return <div data-layer="AUTO / Saved Outfits" className={styles.screen}>
-    <CollagePageHeader title="Saved Outfits" description="Tap a card to reopen it in Outfit Builder." addHref="/outfits/new" addLabel="Add outfit" />
+    <CollagePageHeader title="Saved Outfits" description="Tap a card to reopen it in Outfit Builder." />
 
     <label className={styles.search}>
       <span className={styles.searchIcon} aria-hidden="true">⌕</span>
@@ -49,19 +59,18 @@ export default function FigmaSavedOutfits() {
 
     <section className={styles.content}>
       <div data-layer="Frame 12" className={styles.grid}>
+        <div className={styles.column}>
+          <Link href="/outfits/new" aria-label="Add outfit" className={styles.addCard}>
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M14 6v16M6 14h16" stroke="#29241F" strokeWidth="2" strokeLinecap="round" /></svg>
+          </Link>
+          {filteredOutfits.filter((_, index) => index % 2 === 1).map(renderOutfit)}
+        </div>
+        <div className={styles.column}>
+          {filteredOutfits.filter((_, index) => index % 2 === 0).map(renderOutfit)}
+        </div>
         {databaseError ? <p className={styles.state}>{databaseError}</p> : null}
         {outfits?.length === 0 ? <p className={styles.state}>No saved outfits yet. <Link href="/outfits/new">Create your first outfit.</Link></p> : null}
         {outfits && outfits.length > 0 && filteredOutfits.length === 0 ? <p className={styles.state}>No outfits match this search.</p> : null}
-        {filteredOutfits.map((outfit) => <Link key={outfit.id} href={`/outfits/${outfit.id}`} aria-label={`Open ${outfit.name}`} className={styles.card}>
-          <div className={styles.name}>{outfit.name}</div>
-          <div className={styles.preview}>
-            <div className={styles.composition}>{outfit.pieces.map((piece) => {
-              const item = itemMap.get(piece.clothingId);
-              return item ? <PreviewPiece key={piece.instanceId} piece={piece} item={item} /> : null;
-            })}</div>
-            <span className={styles.openBadge}>Open →</span>
-          </div>
-        </Link>)}
       </div>
     </section>
     <BottomNavigation active="saved" />

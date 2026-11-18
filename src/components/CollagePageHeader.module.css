@@ -48,16 +48,16 @@
 
 .copy h1 {
   color: #29241f;
-  font-family: "Old Standard TT", Georgia, serif;
-  font-size: 30px;
-  font-weight: 700;
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-display);
+  font-weight: var(--font-weight-bold);
   line-height: 1;
 }
 
 .copy p {
   color: #756e63;
-  font-family: "Old Standard TT", Georgia, serif;
-  font-size: 13px;
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-ui);
   line-height: 1.1;
 }
 
@@ -71,12 +71,10 @@
   background: #ffe500;
   border-radius: 50%;
   box-shadow: 1px 1px 0 #756e63;
-  font-family: "Old Standard TT", Georgia, serif;
-  font-size: 30px;
-  font-weight: 400;
+  font-family: var(--font-family-primary);
+  font-size: var(--icon-size-control);
+  font-weight: var(--font-weight-regular);
   line-height: 1;
 }
 
-.addButton span {
-  margin-top: -3px;
-}
+.addButton svg { display: block; }
